@@ -38,7 +38,7 @@ const encodeSrc = `function(input, params) {
     var h = 2166136261 >>> 0;
     for (var k = 0; k < input.length; k++) { h ^= input.charCodeAt(k); h = Math.imul(h, 16777619); }
     h = h >>> 0;
-    var vis = '喵'.repeat((h % 4) + 1) + '，、'[(h >>> 7) % 2] + '喵'.repeat(((h >>> 3) % 4) + 1) + '。！？…'[(h >>> 11) % 4];
+    var vis = word.repeat((h % 4) + 1) + P[(h >>> 7) % P.length] + word.repeat(((h >>> 3) % 4) + 1) + P[(h >>> 11) % P.length];
     var zw = '';
     for (var b = 0; b < bits.length; b++) zw += (bits[b] === '0' ? '${Z0}' : '${Z1}');
     var out = '';
