@@ -295,7 +295,7 @@
     grid.className = 'settings-grid';
 
     schema.forEach(function (s) {
-      var row = document.createElement('label');
+      var row = document.createElement('div');
       row.className = 'setting-item';
 
       var nameSpan = document.createElement('span');
