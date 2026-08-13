@@ -15,10 +15,6 @@
     </div>
     <h1>TextTransmuter</h1>
     <p data-i18n="hero">输入文本，用可插拔内核转换成任意形式（如喵语），也能反向还原。</p>
-    <nav class="page-nav">
-      <button id="nav-converter" class="nav-tab active" type="button" data-i18n="navConverter">转换器</button>
-      <button id="nav-market" class="nav-tab" type="button" data-i18n="navMarket">内核市场</button>
-    </nav>
     <span class="float-meow f1">喵</span>
     <span class="float-meow f2">喵</span>
     <span class="float-meow f3">喵</span>
@@ -33,6 +29,7 @@
         <div class="toolbar">
           <button id="upload-btn" class="btn" type="button" data-i18n="upload">上传内核</button>
           <button id="download-btn" class="btn btn-ghost" type="button" data-i18n="download">下载当前内核</button>
+          <button id="nav-market" class="btn btn-ghost" type="button" data-i18n="navMarket">内核市场</button>
           <a class="btn btn-ghost" href="docs/kernel-spec.html" target="_blank" rel="noopener" data-i18n="spec">内核规范</a>
         </div>
         <input id="file-input" type="file" accept=".json,application/json" hidden />
@@ -84,7 +81,10 @@
     <section class="card">
       <div class="section-head">
         <h2 data-i18n="marketTitle">内核市场</h2>
-        <button id="refresh-market" class="btn btn-ghost" type="button" data-i18n="refresh">刷新</button>
+        <div class="toolbar">
+          <button id="back-converter" class="btn btn-ghost" type="button" data-i18n="back">← 返回</button>
+          <button id="refresh-market" class="btn btn-ghost" type="button" data-i18n="refresh">刷新</button>
+        </div>
       </div>
       <div id="market-list" class="market-list"></div>
     </section>

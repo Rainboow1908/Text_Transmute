@@ -30,9 +30,17 @@ const encodeSrc = `function(input, params) {
     for (var k = 0; k < input.length; k++) { h ^= input.charCodeAt(k); h = Math.imul(h, 16777619); }
     h = h >>> 0;
     var vis = '喵'.repeat((h % 4) + 1) + '，、'[(h >>> 7) % 2] + '喵'.repeat(((h >>> 3) % 4) + 1) + '。！？…'[(h >>> 11) % 4];
-    var zw = vis;
+    var zw = '';
     for (var b = 0; b < bits.length; b++) zw += (bits[b] === '0' ? '${Z0}' : '${Z1}');
-    return zw;
+    var out = '';
+    var per = Math.ceil(zw.length / vis.length);
+    var zi = 0;
+    for (var i = 0; i < vis.length; i++) {
+      out += vis[i];
+      for (var g = 0; g < per && zi < zw.length; g++, zi++) out += zw[zi];
+    }
+    while (zi < zw.length) out += zw[zi++];
+    return out;
   }
   if (bits === '') return '';
   var pad = (5 - (bits.length % 5)) % 5;
@@ -111,7 +119,7 @@ const kernel = {
   params: [
     { name: 'key', type: 'string', label: { zh: '密钥', en: 'Key' }, default: '', placeholder: { zh: '留空则不加密', en: 'Leave empty for no encryption' }, description: { zh: '非空时用密钥对内容加密，解码需要相同的密钥。', en: 'When non-empty, encrypts with the key; decoding needs the same key.' } },
     { name: 'lang', type: 'select', label: { zh: '输出语言', en: 'Output language' }, options: ['喵', 'Meow'], default: '喵', description: { zh: '决定喵语使用的“词”与标点。', en: 'The word and punctuation set used.' } },
-    { name: 'zeroWidth', type: 'boolean', label: { zh: '零宽隐写', en: 'Zero-width' }, default: false, description: { zh: '开启后数据藏在不可见字符里，肉眼只看到一句随输入变化的短喵话。', en: 'Hides data in invisible characters; only a short input-dependent sentence is visible.' } }
+    { name: 'zeroWidth', type: 'boolean', label: { zh: '零宽隐写', en: 'Zero-width' }, default: false, description: { zh: '开启后数据藏在不可见字符里，肉眼只看到一句随输入变化的短喵话。注意：部分平台（聊天软件、表单等）可能会过滤或丢失零宽字符。', en: 'Hides data in invisible characters; only a short input-dependent sentence is visible. Note: some platforms may strip zero-width characters.' } }
   ],
   encode: encodeSrc,
   decode: decodeSrc

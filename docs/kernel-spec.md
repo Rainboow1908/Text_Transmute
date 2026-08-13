@@ -108,7 +108,7 @@ decode: (input: string, params: object) => string
 
 | 内核 | 文件 | 说明 |
 |------|------|------|
-| 喵话编码 | `kernels/meow-sentence.json` | 每个 UTF-16 码元转 16 bit，整串按每 5 bit 一组编码成「若干个“词” + 一个标点」，可选密钥加密、可选输出语言（喵 / Meow） |
+| 喵话编码 | `kernels/meow-sentence.json` | 每个 UTF-16 码元转 16 bit，整串按每 5 bit 一组编码成「若干个“词” + 一个标点」，可选密钥加密、可选输出语言（喵 / Meow）、可选零宽隐写（数据藏在不可见字符里，肉眼只看到一句短喵话；注意部分平台可能过滤零宽字符） |
 | 摩斯密码 | `kernels/morse.json` | 经典摩斯码，点/划/字母间隔/词间隔四个符号均可自定义 |
 | 佛曰编码 | `kernels/buddha.json` | 复刻 pi.hahaka.com 的「与佛论禅」：AES 加密后映射为佛经风格汉字，输出以「佛曰：」开头，可设密钥 |
 

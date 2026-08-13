@@ -7,8 +7,8 @@
   var I18N = {
     zh: {
       hero: '输入文本，用可插拔内核转换成任意形式（如喵语），也能反向还原。',
-      navConverter: '转换器',
       navMarket: '内核市场',
+      back: '← 返回',
       kernelTitle: '转换内核',
       upload: '上传内核',
       download: '下载当前内核',
@@ -38,8 +38,8 @@
     },
     en: {
       hero: 'Transform text into any form (like Meow) with pluggable kernels — and back.',
-      navConverter: 'Converter',
       navMarket: 'Kernel Market',
+      back: '← Back',
       kernelTitle: 'Kernel',
       upload: 'Upload kernel',
       download: 'Download kernel',
@@ -139,15 +139,8 @@
   function showView(view) {
     var cv = document.getElementById('view-converter');
     var mv = document.getElementById('view-market');
-    var nc = document.getElementById('nav-converter');
-    var nm = document.getElementById('nav-market');
-    if (view === 'market') {
-      cv.hidden = true; mv.hidden = false;
-      nc.classList.remove('active'); nm.classList.add('active');
-    } else {
-      cv.hidden = false; mv.hidden = true;
-      nc.classList.add('active'); nm.classList.remove('active');
-    }
+    cv.hidden = (view === 'market');
+    mv.hidden = (view !== 'market');
   }
 
   /* ---------------- 渲染 ---------------- */
@@ -413,9 +406,9 @@
   document.getElementById('lang-zh').addEventListener('click', function () { applyLanguage('zh'); });
   document.getElementById('lang-en').addEventListener('click', function () { applyLanguage('en'); });
 
-  /* ---------------- 导航切换 ---------------- */
-  document.getElementById('nav-converter').addEventListener('click', function () { showView('converter'); });
+  /* ---------------- 视图切换 ---------------- */
   document.getElementById('nav-market').addEventListener('click', function () { showView('market'); });
+  document.getElementById('back-converter').addEventListener('click', function () { showView('converter'); });
   document.getElementById('refresh-market').addEventListener('click', function () { loadMarket(); });
 
   /* ---------------- 初始化 ---------------- */

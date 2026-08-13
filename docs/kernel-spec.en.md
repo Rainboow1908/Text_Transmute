@@ -108,7 +108,7 @@ Example:
 
 | Kernel | File | Description |
 |--------|------|-------------|
-| 喵话编码 | `kernels/meow-sentence.json` | 16-bit code units → 5-bit groups → "N words + a punctuation mark"; optional key encryption and output language (喵 / Meow) |
+| 喵话编码 | `kernels/meow-sentence.json` | 16-bit code units → 5-bit groups → "N words + a punctuation mark"; optional key encryption, output language (喵 / Meow) and zero-width steganography (data hidden in invisible characters, only a short sentence visible; note some platforms may strip them) |
 | 摩斯密码 | `kernels/morse.json` | Classic Morse; dot / dash / letter gap / word gap all customizable |
 | 佛曰编码 | `kernels/buddha.json` | Port of pi.hahaka.com "Buddha" cipher: AES + sutra-style mapping, prefixed "佛曰：", optional key |
 
