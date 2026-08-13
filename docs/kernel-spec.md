@@ -7,12 +7,12 @@
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `name` | string | ✅ | 内核名称，展示用（如 `喵数编码`） |
-| `version` | string | 可选 | 版本号，如 `1.0.0` |
-| `description` | string | 可选 | 一句话描述转换原理 |
-| `author` | string | 可选 | 作者名 |
-| `encode` | string | ✅ | JS 函数源码，人话 → 喵语 |
-| `decode` | string | ✅ | JS 函数源码，喵语 → 人话 |
+| `name` | string | 是 | 内核名称，展示用（如 `喵话编码`） |
+| `version` | string | 否 | 版本号，如 `1.0.0` |
+| `description` | string | 否 | 一句话描述转换原理 |
+| `author` | string | 否 | 作者名 |
+| `encode` | string | 是 | JS 函数源码，人话 → 喵语 |
+| `decode` | string | 是 | JS 函数源码，喵语 → 人话 |
 
 > `encode` / `decode` 的值是一段 **JavaScript 函数源码字符串**（可以是
 > `function(x){...}` 或箭头函数 `(x)=>{...}`）。
@@ -30,16 +30,16 @@ decode: (input: string) => string
 - **互逆**：对内核声称支持的输入范围，应满足 `decode(encode(x)) === x`。
 - **报错**：遇到无法处理的输入，用 `throw new Error('...')` 抛出，页面会捕获并以红色提示显示。
 
-## 3. 完整示例
+## 3. 完整示例（内置「喵话编码」内核）
 
 ```json
 {
-  "name": "喵数编码",
+  "name": "喵话编码",
   "version": "1.0.0",
-  "description": "每个字符的 Unicode 码点按十进制逐位计数：数字 N 写成 N 个“喵”，位与位之间用“？”，字符结束用“！”。",
-  "author": "示例",
-  "encode": "function(input){ let out=''; for(const ch of input){ const ds=String(ch.codePointAt(0)); for(let i=0;i<ds.length;i++){ out+='喵'.repeat(+ds[i])+(i===ds.length-1?'！':'？'); } } return out; }",
-  "decode": "function(input){ const chars=[]; let digits=[],count=0; for(const ch of input){ if(ch==='喵'){count++;continue;} if(ch==='？'){digits.push(count%10);count=0;continue;} if(ch==='！'){digits.push(count%10);count=0;chars.push(String.fromCodePoint(+digits.join('')));digits=[];continue;} if(/\\s/.test(ch))continue; throw new Error('无法识别的字符: '+ch); } return chars.join(''); }"
+  "description": "把文本按每 5 个比特编码成「若干个“喵” + 一个中文标点」，8 种标点 × 4 种喵数 = 32 进制，输出像一句有句读的喵话，可逆且更短。",
+  "author": "内置示例",
+  "encode": "function sentenceEncode(input) {\n    var P = ['，', '。', '！', '？', '：', '；', '、', '…'];\n    var bits = '';\n    for (var i = 0; i < input.length; i++) {\n      bits += input.charCodeAt(i).toString(2).padStart(16, '0');\n    }\n    if (bits === '') return '';\n    var pad = (5 - (bits.length % 5)) % 5;\n    bits += '0'.repeat(pad);\n    var out = '';\n    for (var j = 0; j < bits.length; j += 5) {\n      var d = parseInt(bits.substr(j, 5), 2);\n      out += '喵'.repeat((d % 4) + 1) + P[d >> 2];\n    }\n    return out;\n  }",
+  "decode": "function sentenceDecode(input) {\n    var P = ['，', '。', '！', '？', '：', '；', '、', '…'];\n    var bits = '';\n    var count = 0;\n    for (var i = 0; i < input.length; i++) {\n      var ch = input[i];\n      if (ch === '喵') { count++; continue; }\n      var idx = P.indexOf(ch);\n      if (idx >= 0) {\n        var n = count;\n        count = 0;\n        if (n < 1 || n > 4) throw new Error('喵话编码：喵的数量「' + n + '」超出 1~4');\n        bits += (idx * 4 + (n - 1)).toString(2).padStart(5, '0');\n        continue;\n      }\n      if (/\\s/.test(ch)) continue;\n      throw new Error('喵话编码：无法识别的字符「' + ch + '」');\n    }\n    if (count > 0) throw new Error('喵话编码：结尾缺少标点');\n    var out = '';\n    for (var j = 0; j + 16 <= bits.length; j += 16) {\n      out += String.fromCharCode(parseInt(bits.substr(j, 16), 2));\n    }\n    return out;\n  }"
 }
 ```
 
@@ -47,9 +47,7 @@ decode: (input: string) => string
 
 | 内核 | 规则简述 | 可逆 |
 |------|----------|------|
-| 喵数编码 | 码点十进制逐位计数，`喵×N` + `？/！` 分隔 | ✅ |
-| 摩斯喵语 | 点=`喵`、划=`喵喵`，元素间 `·`，字母间 `？`，词间 `！`（支持 A-Z 0-9 及部分标点） | ✅ |
-| 二进制喵语 | UTF-16 码元 → 16 位二进制，`0=喵`、`1=喵喵`，位间 `·`，字符间 `？`，结束 `！` | ✅ |
+| 喵话编码 | 每个 UTF-16 码元转 16 bit，整串按每 5 bit 一组编码成「`喵`×1~4 + 8 种中文标点之一」，即 32 进制。输出自带句读、更短 | 是 |
 
 ## 5. 安全说明
 

@@ -5,9 +5,7 @@ const fs = require('fs');
 const { builtinKernels, kernelToJSON } = require('../js/kernels.js');
 
 const FILES = {
-  '喵数编码': 'meow-number.json',
-  '摩斯喵语': 'meow-morse.json',
-  '二进制喵语': 'meow-binary.json'
+  '喵话编码': 'meow-sentence.json'
 };
 
 const outDir = path.join(__dirname, '..', 'kernels');

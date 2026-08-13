@@ -19,25 +19,28 @@ function roundtrip(k, samples) {
   console.log('OK   [' + k.name + '] ' + samples.length + ' 组样本往返通过');
 }
 
-// 喵数编码：全 Unicode 覆盖
-roundtrip(builtinKernels[0], [
-  '', '你好，世界', 'Hello, World!', '1234567890', '😀🚀', 'a\nb\tc', '喵喵喵'
+const k = builtinKernels[0];
+
+// 喵话编码：全 Unicode 覆盖（含 emoji / 代理对 / 换行 / 长文本）
+roundtrip(k, [
+  '',
+  '你好，世界',
+  'Hello, World!',
+  '1234567890',
+  '😀🚀',
+  'a\nb\tc',
+  '喵喵喵，喵喵喵：“喵喵”。喵喵喵喵！',
+  '混合 Mixed 123 中文 😀 符号 @#$%^&*()',
+  '很长的一段文字：'.repeat(200)
 ]);
 
-// 摩斯喵语：仅 A-Z 0-9 及标点（输出统一大写）
-roundtrip(builtinKernels[1], [
-  '', 'HELLO WORLD', 'SOS', 'HELLO, WORLD!', '123 456', 'A-Z 0-9'
-]);
-
-// 二进制喵语：任意字符
-roundtrip(builtinKernels[2], [
-  '', '你好，世界', 'Hello, World!', '123', '😀', '混合Mixed123', '喵'
-]);
-
-// compileKernel + kernelToJSON 往返（模拟“上传内核”路径）
-const json = kernelToJSON(builtinKernels[0]);
+// compileKernel + kernelToJSON 往返（模拟“上传/下载内核”路径）
+const json = kernelToJSON(k);
 const compiled = compileKernel(json);
-roundtrip(compiled, ['你好', 'abc', '😀']);
+roundtrip(compiled, ['你好', 'abc', '😀', '混合Mixed123']);
+
+// 打印一个样例，便于人工观察“像话”程度与压缩效果
+console.log('\n样例「你好，世界」→ ' + JSON.stringify(k.encode('你好，世界')));
 
 console.log(failed ? 'FAILED' : 'ALL PASS');
 process.exit(failed ? 1 : 0);

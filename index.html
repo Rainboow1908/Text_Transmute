@@ -9,8 +9,11 @@
 </head>
 <body>
   <header class="hero">
-    <h1>🐱 喵语转换器</h1>
-    <p>输入人话，转换成 <code>喵喵喵？喵喵！</code> 这种喵语；也能把喵语还原回来。</p>
+    <h1>喵语转换器</h1>
+    <p>输入人话，转换成 <code>喵喵喵，喵喵：“喵喵”。喵喵喵！</code> 这种喵语；也能把喵语还原回来。</p>
+    <span class="float-meow f1">喵</span>
+    <span class="float-meow f2">喵</span>
+    <span class="float-meow f3">喵</span>
   </header>
 
   <main>
@@ -19,9 +22,9 @@
       <div class="section-head">
         <h2>转换内核</h2>
         <div class="toolbar">
-          <button id="upload-btn" class="btn" type="button">⬆ 上传内核</button>
-          <button id="download-btn" class="btn btn-ghost" type="button">⬇ 下载当前内核</button>
-          <a class="btn btn-ghost" href="docs/kernel-spec.html" target="_blank" rel="noopener">📄 内核规范</a>
+          <button id="upload-btn" class="btn" type="button">上传内核</button>
+          <button id="download-btn" class="btn btn-ghost" type="button">下载当前内核</button>
+          <a class="btn btn-ghost" href="docs/kernel-spec.html" target="_blank" rel="noopener">内核规范</a>
         </div>
         <input id="file-input" type="file" accept=".json,application/json" hidden />
       </div>

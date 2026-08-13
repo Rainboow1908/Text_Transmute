@@ -19,132 +19,55 @@
   'use strict';
 
   /* ------------------------------------------------------------------ *
-   * 内置内核 1：喵数编码（默认）
-   * 每个字符的 Unicode 码点 → 十进制 → 逐位计数：
-   *   数字 N → 写 N 个「喵」；位与位之间「？」；字符结束「！」。
+   * 内置内核：喵话编码（Meow Sentence）
+   *
+   * 把每个 UTF-16 码元转成 16 位二进制，整串拼成 bit 流后按每 5 bit
+   * 一组编码成「若干个“喵” + 一个中文标点」：
+   *   - 喵的数量 n ∈ 1..4，来自该组 5 bit 的低 2 位（d % 4 + 1）
+   *   - 标点来自 8 种中文标点，索引为高 3 位（d >> 2）
+   * 即 8 标点 × 4 喵数 = 32 进制，每个单元携带 5 bit。
+   * 输出自带逗号/句号/感叹号等句读，像一句“喵话”，且比逐位二进制短得多。
    * ------------------------------------------------------------------ */
-  function numberEncode(input) {
-    let out = '';
-    for (const ch of input) {
-      const ds = String(ch.codePointAt(0));
-      for (let i = 0; i < ds.length; i++) {
-        out += '喵'.repeat(+ds[i]) + (i === ds.length - 1 ? '！' : '？');
-      }
+  function sentenceEncode(input) {
+    // 8 种标点：逗号、句号、感叹号、问号、冒号、分号、顿号、省略号
+    var P = ['，', '。', '！', '？', '：', '；', '、', '…'];
+    var bits = '';
+    for (var i = 0; i < input.length; i++) {
+      bits += input.charCodeAt(i).toString(2).padStart(16, '0');
+    }
+    if (bits === '') return '';
+    var pad = (5 - (bits.length % 5)) % 5;
+    bits += '0'.repeat(pad);
+    var out = '';
+    for (var j = 0; j < bits.length; j += 5) {
+      var d = parseInt(bits.substr(j, 5), 2);
+      out += '喵'.repeat((d % 4) + 1) + P[d >> 2];
     }
     return out;
   }
 
-  function numberDecode(input) {
-    const chars = [];
-    let digits = [];
-    let count = 0;
-    for (const ch of input) {
+  function sentenceDecode(input) {
+    var P = ['，', '。', '！', '？', '：', '；', '、', '…'];
+    var bits = '';
+    var count = 0;
+    for (var i = 0; i < input.length; i++) {
+      var ch = input[i];
       if (ch === '喵') { count++; continue; }
-      if (ch === '？') { digits.push(count % 10); count = 0; continue; }
-      if (ch === '！') {
-        digits.push(count % 10);
+      var idx = P.indexOf(ch);
+      if (idx >= 0) {
+        var n = count;
         count = 0;
-        chars.push(String.fromCodePoint(+digits.join('')));
-        digits = [];
+        if (n < 1 || n > 4) throw new Error('喵话编码：喵的数量「' + n + '」超出 1~4');
+        bits += (idx * 4 + (n - 1)).toString(2).padStart(5, '0');
         continue;
       }
       if (/\s/.test(ch)) continue; // 忽略粘贴时带入的空白
-      throw new Error('喵数编码：无法识别的字符「' + ch + '」');
+      throw new Error('喵话编码：无法识别的字符「' + ch + '」');
     }
-    return chars.join('');
-  }
-
-  /* ------------------------------------------------------------------ *
-   * 内置内核 2：摩斯喵语
-   * 点 =「喵」，划 =「喵喵」，元素间「·」，字母间「？」，词间「！」。
-   * 支持 A-Z、0-9 及部分标点。
-   * ------------------------------------------------------------------ */
-  var MORSE_TABLE = {
-    'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
-    'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
-    'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
-    'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
-    'Y': '-.--', 'Z': '--..',
-    '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
-    '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
-    '.': '.-.-.-', ',': '--..--', '?': '..--..', '!': '-.-.--', '/': '-..-.',
-    '-': '-....-', '(': '-.--.', ')': '-.--.-', '@': '.--.-.'
-  };
-
-  function morseEncode(input) {
-    const words = input.toUpperCase().split(/\s+/).filter(Boolean);
-    let out = '';
-    for (let w = 0; w < words.length; w++) {
-      if (w > 0) out += '！';
-      const word = words[w];
-      for (let i = 0; i < word.length; i++) {
-        const code = MORSE_TABLE[word[i]];
-        if (!code) throw new Error('摩斯喵语：不支持的字符「' + word[i] + '」');
-        const parts = [];
-        for (const sym of code) parts.push(sym === '.' ? '喵' : '喵喵');
-        out += parts.join('·');
-        if (i < word.length - 1) out += '？';
-      }
-    }
-    return out;
-  }
-
-  function morseDecode(input) {
-    let reverse = {};
-    for (const k in MORSE_TABLE) reverse[MORSE_TABLE[k]] = k;
-    const words = input.split('！');
-    let out = '';
-    for (let w = 0; w < words.length; w++) {
-      if (w > 0) out += ' ';
-      const letters = words[w].split('？');
-      for (const letter of letters) {
-        if (!letter) continue;
-        let code = '';
-        for (const s of letter.split('·')) {
-          if (s === '喵') code += '.';
-          else if (s === '喵喵') code += '-';
-          else if (s === '') continue;
-          else throw new Error('摩斯喵语：无法识别的元素「' + s + '」');
-        }
-        const ch = reverse[code];
-        if (ch === undefined) throw new Error('摩斯喵语：未知的摩斯码「' + code + '」');
-        out += ch;
-      }
-    }
-    return out;
-  }
-
-  /* ------------------------------------------------------------------ *
-   * 内置内核 3：二进制喵语
-   * 每个 UTF-16 码元 → 16 位二进制：
-   *   0 =「喵」，1 =「喵喵」，位间「·」，字符间「？」，结束「！」。
-   * ------------------------------------------------------------------ */
-  function binaryEncode(input) {
-    if (input === '') return '';
-    let out = '';
-    for (let i = 0; i < input.length; i++) {
-      const bin = input.charCodeAt(i).toString(2).padStart(16, '0');
-      const bits = [];
-      for (const b of bin) bits.push(b === '0' ? '喵' : '喵喵');
-      out += bits.join('·') + '？';
-    }
-    return out + '！';
-  }
-
-  function binaryDecode(input) {
-    const body = input.endsWith('！') ? input.slice(0, -1) : input;
-    let out = '';
-    for (const token of body.split('？')) {
-      if (!token) continue;
-      let bits = '';
-      for (const s of token.split('·')) {
-        if (s === '喵') bits += '0';
-        else if (s === '喵喵') bits += '1';
-        else if (s === '') continue;
-        else throw new Error('二进制喵语：无法识别的元素「' + s + '」');
-      }
-      if (bits.length === 0) continue;
-      out += String.fromCharCode(parseInt(bits, 2));
+    if (count > 0) throw new Error('喵话编码：结尾缺少标点');
+    var out = '';
+    for (var j = 0; j + 16 <= bits.length; j += 16) {
+      out += String.fromCharCode(parseInt(bits.substr(j, 16), 2));
     }
     return out;
   }
@@ -154,28 +77,12 @@
    * ------------------------------------------------------------------ */
   var builtinKernels = [
     {
-      name: '喵数编码',
+      name: '喵话编码',
       version: '1.0.0',
-      description: '默认内核：每个字符的 Unicode 码点按十进制逐位计数，数字 N 写成 N 个「喵」，位间「？」，字符结束「！」。',
+      description: '把文本按每 5 个比特编码成「若干个“喵” + 一个中文标点」，8 种标点 × 4 种喵数 = 32 进制，输出像一句有句读的喵话，可逆且更短。',
       author: '内置示例',
-      encode: numberEncode,
-      decode: numberDecode
-    },
-    {
-      name: '摩斯喵语',
-      version: '1.0.0',
-      description: '经典摩斯码：点=「喵」、划=「喵喵」，元素间「·」，字母间「？」，词间「！」。支持 A-Z、0-9 及部分标点。',
-      author: '内置示例',
-      encode: morseEncode,
-      decode: morseDecode
-    },
-    {
-      name: '二进制喵语',
-      version: '1.0.0',
-      description: '每个 UTF-16 码元转 16 位二进制：0=「喵」、1=「喵喵」，位间「·」，字符间「？」，结束「！」。',
-      author: '内置示例',
-      encode: binaryEncode,
-      decode: binaryDecode
+      encode: sentenceEncode,
+      decode: sentenceDecode
     }
   ];
 

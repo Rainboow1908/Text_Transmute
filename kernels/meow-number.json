@@ -1,8 +1,0 @@
-{
-  "name": "喵数编码",
-  "version": "1.0.0",
-  "description": "默认内核：每个字符的 Unicode 码点按十进制逐位计数，数字 N 写成 N 个「喵」，位间「？」，字符结束「！」。",
-  "author": "内置示例",
-  "encode": "function numberEncode(input) {\n    let out = '';\n    for (const ch of input) {\n      const ds = String(ch.codePointAt(0));\n      for (let i = 0; i < ds.length; i++) {\n        out += '喵'.repeat(+ds[i]) + (i === ds.length - 1 ? '！' : '？');\n      }\n    }\n    return out;\n  }",
-  "decode": "function numberDecode(input) {\n    const chars = [];\n    let digits = [];\n    let count = 0;\n    for (const ch of input) {\n      if (ch === '喵') { count++; continue; }\n      if (ch === '？') { digits.push(count % 10); count = 0; continue; }\n      if (ch === '！') {\n        digits.push(count % 10);\n        count = 0;\n        chars.push(String.fromCodePoint(+digits.join('')));\n        digits = [];\n        continue;\n      }\n      if (/\\s/.test(ch)) continue; // 忽略粘贴时带入的空白\n      throw new Error('喵数编码：无法识别的字符「' + ch + '」');\n    }\n    return chars.join('');\n  }"
-}

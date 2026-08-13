@@ -1,0 +1,8 @@
+{
+  "name": "喵话编码",
+  "version": "1.0.0",
+  "description": "把文本按每 5 个比特编码成「若干个“喵” + 一个中文标点」，8 种标点 × 4 种喵数 = 32 进制，输出像一句有句读的喵话，可逆且更短。",
+  "author": "内置示例",
+  "encode": "function sentenceEncode(input) {\n    // 8 种标点：逗号、句号、感叹号、问号、冒号、分号、顿号、省略号\n    var P = ['，', '。', '！', '？', '：', '；', '、', '…'];\n    var bits = '';\n    for (var i = 0; i < input.length; i++) {\n      bits += input.charCodeAt(i).toString(2).padStart(16, '0');\n    }\n    if (bits === '') return '';\n    var pad = (5 - (bits.length % 5)) % 5;\n    bits += '0'.repeat(pad);\n    var out = '';\n    for (var j = 0; j < bits.length; j += 5) {\n      var d = parseInt(bits.substr(j, 5), 2);\n      out += '喵'.repeat((d % 4) + 1) + P[d >> 2];\n    }\n    return out;\n  }",
+  "decode": "function sentenceDecode(input) {\n    var P = ['，', '。', '！', '？', '：', '；', '、', '…'];\n    var bits = '';\n    var count = 0;\n    for (var i = 0; i < input.length; i++) {\n      var ch = input[i];\n      if (ch === '喵') { count++; continue; }\n      var idx = P.indexOf(ch);\n      if (idx >= 0) {\n        var n = count;\n        count = 0;\n        if (n < 1 || n > 4) throw new Error('喵话编码：喵的数量「' + n + '」超出 1~4');\n        bits += (idx * 4 + (n - 1)).toString(2).padStart(5, '0');\n        continue;\n      }\n      if (/\\s/.test(ch)) continue; // 忽略粘贴时带入的空白\n      throw new Error('喵话编码：无法识别的字符「' + ch + '」');\n    }\n    if (count > 0) throw new Error('喵话编码：结尾缺少标点');\n    var out = '';\n    for (var j = 0; j + 16 <= bits.length; j += 16) {\n      out += String.fromCharCode(parseInt(bits.substr(j, 16), 2));\n    }\n    return out;\n  }"
+}

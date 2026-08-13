@@ -1,8 +1,0 @@
-{
-  "name": "二进制喵语",
-  "version": "1.0.0",
-  "description": "每个 UTF-16 码元转 16 位二进制：0=「喵」、1=「喵喵」，位间「·」，字符间「？」，结束「！」。",
-  "author": "内置示例",
-  "encode": "function binaryEncode(input) {\n    if (input === '') return '';\n    let out = '';\n    for (let i = 0; i < input.length; i++) {\n      const bin = input.charCodeAt(i).toString(2).padStart(16, '0');\n      const bits = [];\n      for (const b of bin) bits.push(b === '0' ? '喵' : '喵喵');\n      out += bits.join('·') + '？';\n    }\n    return out + '！';\n  }",
-  "decode": "function binaryDecode(input) {\n    const body = input.endsWith('！') ? input.slice(0, -1) : input;\n    let out = '';\n    for (const token of body.split('？')) {\n      if (!token) continue;\n      let bits = '';\n      for (const s of token.split('·')) {\n        if (s === '喵') bits += '0';\n        else if (s === '喵喵') bits += '1';\n        else if (s === '') continue;\n        else throw new Error('二进制喵语：无法识别的元素「' + s + '」');\n      }\n      if (bits.length === 0) continue;\n      out += String.fromCharCode(parseInt(bits, 2));\n    }\n    return out;\n  }"
-}

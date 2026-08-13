@@ -85,6 +85,9 @@
       '<div><b>' + escapeHtml(current.name) + '</b>' +
       (meta ? ' <span class="meta">' + escapeHtml(meta) + '</span>' : '') + '</div>' +
       '<div class="meta">' + escapeHtml(current.description || '（无描述）') + '</div>';
+    kernelInfo.classList.remove('info-swap');
+    void kernelInfo.offsetWidth;
+    kernelInfo.classList.add('info-swap');
   }
 
   /* ---------------- 选择内核 ---------------- */
@@ -159,6 +162,9 @@
     clearError();
     try {
       output.value = fn(input.value);
+      output.classList.remove('meow-flash');
+      void output.offsetWidth; // 重新触发动画
+      output.classList.add('meow-flash');
     } catch (e) {
       showError('转换失败：' + e.message);
     }

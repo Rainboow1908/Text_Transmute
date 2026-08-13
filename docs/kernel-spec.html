@@ -36,12 +36,12 @@
         <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
       </thead>
       <tbody>
-        <tr><td><code>name</code></td><td>string</td><td>✅</td><td>内核名称，展示用（如 <code>喵数编码</code>）</td></tr>
-        <tr><td><code>version</code></td><td>string</td><td>可选</td><td>版本号，如 <code>1.0.0</code></td></tr>
-        <tr><td><code>description</code></td><td>string</td><td>可选</td><td>一句话描述转换原理</td></tr>
-        <tr><td><code>author</code></td><td>string</td><td>可选</td><td>作者名</td></tr>
-        <tr><td><code>encode</code></td><td>string</td><td>✅</td><td>JS 函数源码，人话 → 喵语</td></tr>
-        <tr><td><code>decode</code></td><td>string</td><td>✅</td><td>JS 函数源码，喵语 → 人话</td></tr>
+        <tr><td><code>name</code></td><td>string</td><td>是</td><td>内核名称，展示用（如 <code>喵话编码</code>）</td></tr>
+        <tr><td><code>version</code></td><td>string</td><td>否</td><td>版本号，如 <code>1.0.0</code></td></tr>
+        <tr><td><code>description</code></td><td>string</td><td>否</td><td>一句话描述转换原理</td></tr>
+        <tr><td><code>author</code></td><td>string</td><td>否</td><td>作者名</td></tr>
+        <tr><td><code>encode</code></td><td>string</td><td>是</td><td>JS 函数源码，人话 → 喵语</td></tr>
+        <tr><td><code>decode</code></td><td>string</td><td>是</td><td>JS 函数源码，喵语 → 人话</td></tr>
       </tbody>
     </table>
     <div class="note"><code>encode</code> / <code>decode</code> 的值是一段 <b>JavaScript 函数源码字符串</b>（可以是 <code>function(x){...}</code> 或箭头函数 <code>(x)=&gt;{...}</code>）。</div>
@@ -57,14 +57,14 @@ decode: (input: string) =&gt; string</code></pre>
       <li><b>报错</b>：遇到无法处理的输入，用 <code>throw new Error('...')</code> 抛出，页面会捕获并以红色提示显示。</li>
     </ul>
 
-    <h2>3. 完整示例</h2>
+    <h2>3. 完整示例（内置「喵话编码」内核）</h2>
     <pre><code>{
-  "name": "喵数编码",
+  "name": "喵话编码",
   "version": "1.0.0",
-  "description": "每个字符的 Unicode 码点按十进制逐位计数：数字 N 写成 N 个“喵”，位与位之间用“？”，字符结束用“！”。",
-  "author": "示例",
-  "encode": "function(input){ let out=''; for(const ch of input){ const ds=String(ch.codePointAt(0)); for(let i=0;i&lt;ds.length;i++){ out+='喵'.repeat(+ds[i])+(i===ds.length-1?'！':'？'); } } return out; }",
-  "decode": "function(input){ const chars=[]; let digits=[],count=0; for(const ch of input){ if(ch==='喵'){count++;continue;} if(ch==='？'){digits.push(count%10);count=0;continue;} if(ch==='！'){digits.push(count%10);count=0;chars.push(String.fromCodePoint(+digits.join('')));digits=[];continue;} if(/\\s/.test(ch))continue; throw new Error('无法识别的字符: '+ch); } return chars.join(''); }"
+  "description": "把文本按每 5 个比特编码成「若干个“喵” + 一个中文标点」，8 种标点 × 4 种喵数 = 32 进制，输出像一句有句读的喵话，可逆且更短。",
+  "author": "内置示例",
+  "encode": "function sentenceEncode(input) {\n    var P = ['，', '。', '！', '？', '：', '；', '、', '…'];\n    var bits = '';\n    for (var i = 0; i &lt; input.length; i++) {\n      bits += input.charCodeAt(i).toString(2).padStart(16, '0');\n    }\n    if (bits === '') return '';\n    var pad = (5 - (bits.length % 5)) % 5;\n    bits += '0'.repeat(pad);\n    var out = '';\n    for (var j = 0; j &lt; bits.length; j += 5) {\n      var d = parseInt(bits.substr(j, 5), 2);\n      out += '喵'.repeat((d % 4) + 1) + P[d &gt;&gt; 2];\n    }\n    return out;\n  }",
+  "decode": "function sentenceDecode(input) {\n    var P = ['，', '。', '！', '？', '：', '；', '、', '…'];\n    var bits = '';\n    var count = 0;\n    for (var i = 0; i &lt; input.length; i++) {\n      var ch = input[i];\n      if (ch === '喵') { count++; continue; }\n      var idx = P.indexOf(ch);\n      if (idx &gt;= 0) {\n        var n = count;\n        count = 0;\n        if (n &lt; 1 || n &gt; 4) throw new Error('喵话编码：喵的数量「' + n + '」超出 1~4');\n        bits += (idx * 4 + (n - 1)).toString(2).padStart(5, '0');\n        continue;\n      }\n      if (/\\s/.test(ch)) continue;\n      throw new Error('喵话编码：无法识别的字符「' + ch + '」');\n    }\n    if (count &gt; 0) throw new Error('喵话编码：结尾缺少标点');\n    var out = '';\n    for (var j = 0; j + 16 &lt;= bits.length; j += 16) {\n      out += String.fromCharCode(parseInt(bits.substr(j, 16), 2));\n    }\n    return out;\n  }"
 }</code></pre>
 
     <h2>4. 内置示例内核</h2>
@@ -73,9 +73,7 @@ decode: (input: string) =&gt; string</code></pre>
         <tr><th>内核</th><th>规则简述</th><th>可逆</th></tr>
       </thead>
       <tbody>
-        <tr><td>喵数编码</td><td>码点十进制逐位计数，<code>喵×N</code> + <code>？/！</code> 分隔</td><td>✅</td></tr>
-        <tr><td>摩斯喵语</td><td>点=<code>喵</code>、划=<code>喵喵</code>，元素间 <code>·</code>，字母间 <code>？</code>，词间 <code>！</code>（支持 A-Z 0-9 及部分标点）</td><td>✅</td></tr>
-        <tr><td>二进制喵语</td><td>UTF-16 码元 → 16 位二进制，<code>0=喵</code>、<code>1=喵喵</code>，位间 <code>·</code>，字符间 <code>？</code>，结束 <code>！</code></td><td>✅</td></tr>
+        <tr><td>喵话编码</td><td>每个 UTF-16 码元转 16 bit，整串按每 5 bit 一组编码成「<code>喵</code>×1~4 + 8 种中文标点之一」，即 32 进制。输出自带句读、更短</td><td>是</td></tr>
       </tbody>
     </table>
 
