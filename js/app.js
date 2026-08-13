@@ -12,6 +12,7 @@
       download: '下载当前内核',
       spec: '内核规范',
       builtin: '内置',
+      market: '市场',
       uploaded: '已上传',
       settings: '内核设置',
       inputLabel: '输入',
@@ -37,6 +38,7 @@
       download: 'Download kernel',
       spec: 'Kernel spec',
       builtin: 'Built-in',
+      market: 'Market',
       uploaded: 'Uploaded',
       settings: 'Kernel settings',
       inputLabel: 'Input',
@@ -83,6 +85,7 @@
 
   /* ---------------- DOM ---------------- */
   var builtinTabs = document.getElementById('builtin-tabs');
+  var marketTabs = document.getElementById('market-tabs');
   var uploadedTabs = document.getElementById('uploaded-tabs');
   var uploadedLabel = document.getElementById('uploaded-label');
   var kernelInfo = document.getElementById('kernel-info');
@@ -99,11 +102,12 @@
   var errorBox = document.getElementById('error-box');
 
   /* ---------------- 状态 ---------------- */
-  var builtin = [];               // 内置内核（从 kernels/*.json 文件加载）
+  var builtin = [];               // 内置内核（kernels/*.json）
+  var market = [];                // 市场内核（market/*.json）
   var uploaded = [];              // 用户上传的内核
-  var current = null;             // 当前内核对象
-  var currentKey = '';            // 标识当前内核来源与索引
-  var currentParams = {};         // 当前参数值（由内核 params 定义 + 用户设置）
+  var current = null;
+  var currentKey = '';
+  var currentParams = {};
 
   /* ---------------- 工具 ---------------- */
   function showError(msg) {
@@ -114,7 +118,6 @@
     errorBox.hidden = true;
     errorBox.textContent = '';
   }
-
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -129,9 +132,20 @@
       var el = document.createElement('button');
       el.type = 'button';
       el.className = 'tab' + (key === currentKey ? ' active' : '');
-      el.textContent = k.name;
+      el.textContent = M.localized(k.name, currentLang);
       el.addEventListener('click', function () { selectBuiltin(i); });
       builtinTabs.appendChild(el);
+    });
+
+    marketTabs.innerHTML = '';
+    market.forEach(function (k, i) {
+      var el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'tab';
+      el.textContent = M.localized(k.name, currentLang);
+      el.title = M.localized(k.description, currentLang);
+      el.addEventListener('click', function () { selectMarket(i); });
+      marketTabs.appendChild(el);
     });
 
     uploadedTabs.innerHTML = '';
@@ -142,12 +156,11 @@
       el.type = 'button';
       el.className = 'tab' + (key === currentKey ? ' active' : '');
       var name = document.createElement('span');
-      name.textContent = k.name;
+      name.textContent = M.localized(k.name, currentLang);
       el.appendChild(name);
       var del = document.createElement('span');
       del.className = 'del';
       del.textContent = '×';
-      del.title = '移除该内核';
       del.addEventListener('click', function (ev) {
         ev.stopPropagation();
         removeUploaded(i);
@@ -160,12 +173,13 @@
 
   function renderInfo() {
     if (!current) { kernelInfo.innerHTML = ''; return; }
-    var meta = [current.version && ('v' + current.version), current.author]
+    var author = M.localized(current.author, currentLang);
+    var meta = [current.version && ('v' + current.version), author]
       .filter(Boolean).join(' · ');
     kernelInfo.innerHTML =
-      '<div><b>' + escapeHtml(current.name) + '</b>' +
+      '<div><b>' + escapeHtml(M.localized(current.name, currentLang)) + '</b>' +
       (meta ? ' <span class="meta">' + escapeHtml(meta) + '</span>' : '') + '</div>' +
-      '<div class="meta">' + escapeHtml(current.description || '') + '</div>';
+      '<div class="meta">' + escapeHtml(M.localized(current.description, currentLang)) + '</div>';
     kernelInfo.classList.remove('info-swap');
     void kernelInfo.offsetWidth;
     kernelInfo.classList.add('info-swap');
@@ -194,7 +208,7 @@
 
       var nameSpan = document.createElement('span');
       nameSpan.className = 'setting-name';
-      nameSpan.textContent = s.label || s.name;
+      nameSpan.textContent = M.localized(s.label, currentLang) || s.name;
       row.appendChild(nameSpan);
 
       var control;
@@ -221,17 +235,18 @@
       } else {
         control = document.createElement('input');
         control.type = 'text';
-        control.placeholder = s.placeholder || '';
+        control.placeholder = M.localized(s.placeholder, currentLang);
         control.value = currentParams[s.name] != null ? currentParams[s.name] : (s.default || '');
         control.addEventListener('input', function () { currentParams[s.name] = control.value; });
       }
       control.className = 'setting-control';
       row.appendChild(control);
 
-      if (s.description) {
+      var descText = M.localized(s.description, currentLang);
+      if (descText) {
         var desc = document.createElement('span');
         desc.className = 'setting-desc';
-        desc.textContent = s.description;
+        desc.textContent = descText;
         row.appendChild(desc);
       }
 
@@ -251,6 +266,11 @@
     renderSettings();
   }
   function selectBuiltin(i) { applyKernel(builtin[i], 'builtin:' + i); }
+  function selectMarket(i) {
+    var kernel = market[i];
+    uploaded.push(kernel);
+    applyKernel(kernel, 'uploaded:' + (uploaded.length - 1));
+  }
   function selectUploaded(i) { applyKernel(uploaded[i], 'uploaded:' + i); }
   function removeUploaded(i) {
     uploaded.splice(i, 1);
@@ -297,7 +317,7 @@
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = (current.name || 'kernel') + '.json';
+    a.download = (M.localized(current.name, 'zh') || 'kernel') + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -310,7 +330,7 @@
     try {
       output.value = fn(input.value, currentParams);
       output.classList.remove('meow-flash');
-      void output.offsetWidth; // 重新触发动画
+      void output.offsetWidth;
       output.classList.add('meow-flash');
     } catch (e) {
       showError(t('transformFailed') + e.message);
@@ -355,18 +375,22 @@
   /* ---------------- 初始化 ---------------- */
   applyLanguage(currentLang);
 
-  function init() {
-    M.loadBuiltinKernels().then(function (kernels) {
-      builtin = kernels;
-      if (!builtin.length) {
-        showError(t('noBuiltinKernels'));
-        return;
-      }
+  M.loadBuiltinKernels().then(function (kernels) {
+    builtin = kernels;
+    if (builtin.length) {
       clearError();
       applyKernel(builtin[0], 'builtin:0');
-    }).catch(function (e) {
-      showError(t('builtinLoadFailed') + '（' + e.message + '）。' + t('builtinLoadHint'));
-    });
-  }
-  init();
+    } else {
+      showError(t('noBuiltinKernels'));
+    }
+  }).catch(function (e) {
+    showError(t('builtinLoadFailed') + '（' + e.message + '）。' + t('builtinLoadHint'));
+  });
+
+  M.loadMarketKernels().then(function (kernels) {
+    market = kernels;
+    renderTabs();
+  }).catch(function () {
+    // 市场加载失败时静默忽略（不影响主体功能）
+  });
 })();

@@ -1,33 +1,31 @@
 /**
- * 喵语转换器 —— 内核加载与编译逻辑
+ * TextTransmuter —— 内核加载与编译逻辑
  *
  * 本文件同时用于浏览器与 Node.js：
  *   - 浏览器：暴露为 window.MiaoKernels
  *   - Node：   可 require('./js/kernels.js') 进行测试
  *
- * 内核内容不再写死在本文件里——内置内核全部以 JSON 文件形式存放在
- * kernels/ 目录，页面启动时通过 loadBuiltinKernels() 从文件加载并编译。
- * 本文件只负责：编译内核、序列化内核、以及“到哪里加载内核文件”的清单。
+ * 内核内容以 JSON 文件形式存放，页面启动时通过 loadBuiltinKernels() /
+ * loadMarketKernels() 从文件加载并编译。本文件只负责编译、序列化与加载。
  *
  * 内核结构（JSON 文件格式）：
  *   {
- *     name:        string,   // 名称（必填）
- *     version:     string,   // 版本
- *     description: string,   // 描述
- *     author:      string,   // 作者
- *     params:      array,    // 可选，自定义参数定义（见 kernel-spec）
- *     encode:      "(input, params) => string",   // 人话 → 喵语（函数源码字符串）
- *     decode:      "(input, params) => string",   // 喵语 → 人话（函数源码字符串）
+ *     name:        string | {zh, en},   // 名称（必填，支持多语言）
+ *     version:     string,
+ *     description: string | {zh, en},
+ *     author:      string | {zh, en},
+ *     params:      array,               // 可选，自定义参数定义
+ *     encode:      "(input, params) => string",
+ *     decode:      "(input, params) => string"
  *   }
  */
 (function (root) {
   'use strict';
 
   /* ------------------------------------------------------------------ *
-   * 内置内核文件清单：内核内容全部在这些 JSON 文件里。
-   * 新增内置内核时，往 kernels/ 加一个 JSON 文件，并在此登记路径即可。
+   * 内置内核文件清单
    * ------------------------------------------------------------------ */
-  var BUILTIN_FILES = ['kernels/meow-sentence.json'];
+  var BUILTIN_FILES = ['kernels/meow-sentence.json', 'kernels/morse.json', 'kernels/buddha.json'];
 
   /* ------------------------------------------------------------------ *
    * 工具：params 定义数组 → 默认值对象
@@ -38,6 +36,21 @@
       if (s && s.name) obj[s.name] = s.default;
     });
     return obj;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 工具：多语言字段取值（支持 string 或 {zh, en, ...} 对象）
+   * ------------------------------------------------------------------ */
+  function localized(value, lang) {
+    if (value == null) return '';
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      if (value[lang] != null && value[lang] !== '') return value[lang];
+      if (value.zh != null && value.zh !== '') return value.zh;
+      if (value.en != null && value.en !== '') return value.en;
+      for (var k in value) { if (value[k] != null && value[k] !== '') return value[k]; }
+      return '';
+    }
+    return value;
   }
 
   /* ------------------------------------------------------------------ *
@@ -53,8 +66,8 @@
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
       throw new Error('内核必须是 JSON 对象');
     }
-    if (typeof data.name !== 'string' || !data.name.trim()) {
-      throw new Error('缺少必填字段 name（字符串）');
+    if (!localized(data.name, 'zh').trim()) {
+      throw new Error('缺少必填字段 name');
     }
     if (typeof data.encode !== 'string' || typeof data.decode !== 'string') {
       throw new Error('encode / decode 必须是函数源码字符串');
@@ -78,8 +91,8 @@
     return {
       name: data.name,
       version: typeof data.version === 'string' ? data.version : '',
-      description: typeof data.description === 'string' ? data.description : '',
-      author: typeof data.author === 'string' ? data.author : '',
+      description: data.description || '',
+      author: data.author || '',
       params: params,
       encode: encode,
       decode: decode
@@ -87,7 +100,7 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * 内核对象 → 可下载/可分享的 JSON 文本（函数序列化为源码字符串）
+   * 内核对象 → 可下载/可分享的 JSON 文本
    * ------------------------------------------------------------------ */
   function kernelToJSON(kernel) {
     var obj = {
@@ -103,7 +116,7 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * 从文件加载内置内核（浏览器用；返回 Promise<内核对象[]>）
+   * 从文件加载内置内核（返回 Promise<内核对象[]>）
    * ------------------------------------------------------------------ */
   function loadBuiltinKernels() {
     return Promise.all(BUILTIN_FILES.map(function (url) {
@@ -114,11 +127,32 @@
     }));
   }
 
+  /* ------------------------------------------------------------------ *
+   * 从内核市场加载内核：market/index.json 列出文件名，逐个 fetch 编译
+   * ------------------------------------------------------------------ */
+  function loadMarketKernels() {
+    return fetch('market/index.json')
+      .then(function (r) {
+        if (!r.ok) throw new Error('market/index.json 加载失败（HTTP ' + r.status + '）');
+        return r.json();
+      })
+      .then(function (files) {
+        return Promise.all(files.map(function (f) {
+          return fetch('market/' + f).then(function (r) {
+            if (!r.ok) throw new Error('market/' + f + ' 加载失败（HTTP ' + r.status + '）');
+            return r.text();
+          }).then(compileKernel);
+        }));
+      });
+  }
+
   var api = {
     compileKernel: compileKernel,
     kernelToJSON: kernelToJSON,
     paramsToDefaults: paramsToDefaults,
-    loadBuiltinKernels: loadBuiltinKernels
+    localized: localized,
+    loadBuiltinKernels: loadBuiltinKernels,
+    loadMarketKernels: loadMarketKernels
   };
 
   if (typeof module !== 'undefined' && module.exports) {

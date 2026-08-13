@@ -1,0 +1,11 @@
+{
+  "name": { "zh": "反转文本", "en": "Reverse" },
+  "version": "1.0.0",
+  "description": {
+    "zh": "把文本倒过来（内核市场示例）。",
+    "en": "Reverses the text (market example kernel)."
+  },
+  "author": "示例",
+  "encode": "function(input){ return input.split('').reverse().join(''); }",
+  "decode": "function(input){ return input.split('').reverse().join(''); }"
+}

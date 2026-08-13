@@ -16,6 +16,7 @@
       gap: 10px;
       margin-bottom: 16px;
     }
+    .lang-switch-inline { display: inline-flex; gap: 4px; }
     .doc h1 { font-size: 1.6rem; margin: 0 0 4px; }
     .doc h2 { margin-top: 28px; font-size: 1.15rem; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
     .doc h3 { margin-top: 20px; font-size: 1.02rem; }
@@ -50,6 +51,10 @@
   <div class="doc">
     <div class="doc-toolbar">
       <a class="btn btn-ghost" href="../index.html">← 返回</a>
+      <div class="lang-switch-inline">
+        <button id="lang-zh" class="lang-btn active" type="button">中</button>
+        <button id="lang-en" class="lang-btn" type="button">EN</button>
+      </div>
       <button id="download-md" class="btn" type="button">下载 Markdown</button>
     </div>
     <div id="content">加载中…</div>
@@ -192,22 +197,33 @@
         return out.join('\n');
       }
 
-      /* ---------- 页面逻辑：fetch md → 渲染 → 下载 ---------- */
+      /* ---------- 页面逻辑：fetch md → 渲染 → 下载（中/英） ---------- */
       var content = document.getElementById('content');
       var mdSource = '';
+      var lang = 'zh';
+      var FILES = { zh: 'kernel-spec.md', en: 'kernel-spec.en.md' };
 
-      fetch('kernel-spec.md')
-        .then(function (r) {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.text();
-        })
-        .then(function (text) {
-          mdSource = text;
-          content.innerHTML = renderMarkdown(text);
-        })
-        .catch(function (e) {
-          content.innerHTML = '<div class="warn">加载内核规范失败：' + escapeHtml(e.message) + '</div>';
-        });
+      function loadDoc(l) {
+        lang = l;
+        document.getElementById('lang-zh').classList.toggle('active', l === 'zh');
+        document.getElementById('lang-en').classList.toggle('active', l === 'en');
+        content.innerHTML = '加载中…';
+        fetch(FILES[l])
+          .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          })
+          .then(function (text) {
+            mdSource = text;
+            content.innerHTML = renderMarkdown(text);
+          })
+          .catch(function (e) {
+            content.innerHTML = '<div class="warn">加载内核规范失败：' + escapeHtml(e.message) + '</div>';
+          });
+      }
+
+      document.getElementById('lang-zh').addEventListener('click', function () { loadDoc('zh'); });
+      document.getElementById('lang-en').addEventListener('click', function () { loadDoc('en'); });
 
       document.getElementById('download-md').addEventListener('click', function () {
         if (!mdSource) return;
@@ -215,12 +231,14 @@
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
         a.href = url;
-        a.download = 'kernel-spec.md';
+        a.download = FILES[lang];
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       });
+
+      loadDoc('zh');
     })();
   </script>
 </body>
