@@ -29,7 +29,7 @@
         <div class="toolbar">
           <button id="upload-btn" class="btn" type="button" data-i18n="upload">上传内核</button>
           <button id="download-btn" class="btn btn-ghost" type="button" data-i18n="download">下载当前内核</button>
-          <button id="nav-market" class="btn btn-ghost" type="button" data-i18n="navMarket">内核市场</button>
+          <a class="btn btn-ghost" href="market.html" target="_blank" rel="noopener" data-i18n="navMarket">内核市场</a>
           <a class="btn btn-ghost" href="docs/kernel-spec.html" target="_blank" rel="noopener" data-i18n="spec">内核规范</a>
         </div>
         <input id="file-input" type="file" accept=".json,application/json" hidden />
@@ -73,20 +73,6 @@
       </div>
 
       <div id="error-box" class="error-box" hidden></div>
-    </section>
-  </main>
-
-  <!-- 内核市场视图 -->
-  <main id="view-market" hidden>
-    <section class="card">
-      <div class="section-head">
-        <h2 data-i18n="marketTitle">内核市场</h2>
-        <div class="toolbar">
-          <button id="back-converter" class="btn btn-ghost" type="button" data-i18n="back">← 返回</button>
-          <button id="refresh-market" class="btn btn-ghost" type="button" data-i18n="refresh">刷新</button>
-        </div>
-      </div>
-      <div id="market-list" class="market-list"></div>
     </section>
   </main>
 

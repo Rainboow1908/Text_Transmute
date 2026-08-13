@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>内核市场 · TextTransmuter</title>
+  <link rel="icon" href="favicon.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="lang-switch">
+      <button id="lang-zh" class="lang-btn" type="button">中</button>
+      <button id="lang-en" class="lang-btn" type="button">EN</button>
+    </div>
+    <h1>TextTransmuter</h1>
+    <p data-i18n="subtitle">内核市场</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="section-head">
+        <h2 data-i18n="title">内核市场</h2>
+        <div class="toolbar">
+          <a class="btn btn-ghost" href="index.html" data-i18n="back">← 返回转换器</a>
+          <button id="refresh" class="btn btn-ghost" type="button" data-i18n="refresh">刷新</button>
+        </div>
+      </div>
+      <div id="market-list" class="market-list"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p data-i18n="footer">从内核市场加载一个内核，会自动跳回转换器并加载好。</p>
+  </footer>
+
+  <script src="js/kernels.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var M = window.MiaoKernels;
+
+      var I18N = {
+        zh: {
+          subtitle: '内核市场',
+          title: '内核市场',
+          back: '← 返回转换器',
+          refresh: '刷新',
+          load: '加载',
+          empty: '市场暂无内核。',
+          footer: '从内核市场加载一个内核，会自动跳回转换器并加载好。'
+        },
+        en: {
+          subtitle: 'Kernel Market',
+          title: 'Kernel Market',
+          back: '← Back to converter',
+          refresh: 'Refresh',
+          load: 'Load',
+          empty: 'No kernels in the market yet.',
+          footer: 'Loading a kernel jumps back to the converter with it loaded.'
+        }
+      };
+
+      var currentLang = (localStorage.getItem('lang') === 'en') ? 'en' : 'zh';
+      var market = [];
+
+      function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || key; }
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      function applyLanguage(lang) {
+        currentLang = lang;
+        try { localStorage.setItem('lang', lang); } catch (e) {}
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+          var key = el.getAttribute('data-i18n');
+          if (I18N[lang][key] != null) el.textContent = I18N[lang][key];
+        });
+        document.getElementById('lang-zh').classList.toggle('active', lang === 'zh');
+        document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+        renderMarket();
+      }
+
+      function renderMarket() {
+        var list = document.getElementById('market-list');
+        list.innerHTML = '';
+        if (!market.length) {
+          list.innerHTML = '<div class="meta">' + escapeHtml(t('empty')) + '</div>';
+          return;
+        }
+        market.forEach(function (k) {
+          var card = document.createElement('div');
+          card.className = 'market-card';
+          var name = M.localized(k.name, currentLang);
+          var desc = M.localized(k.description, currentLang);
+          var author = M.localized(k.author, currentLang);
+          var meta = [k.version && ('v' + k.version), author].filter(Boolean).join(' · ');
+          card.innerHTML =
+            '<div><b>' + escapeHtml(name) + '</b>' +
+            (meta ? ' <span class="meta">' + escapeHtml(meta) + '</span>' : '') + '</div>' +
+            '<div class="meta">' + escapeHtml(desc) + '</div>';
+          var btn = document.createElement('button');
+          btn.className = 'btn';
+          btn.textContent = t('load');
+          btn.addEventListener('click', function () {
+            try { localStorage.setItem('pending-kernel', M.kernelToJSON(k)); } catch (e) {}
+            location.href = 'index.html';
+          });
+          card.appendChild(btn);
+          list.appendChild(card);
+        });
+      }
+
+      function loadMarket() {
+        M.loadMarketKernels().then(function (kernels) {
+          market = kernels;
+          renderMarket();
+        }).catch(function () {
+          market = [];
+          renderMarket();
+        });
+      }
+
+      document.getElementById('lang-zh').addEventListener('click', function () { applyLanguage('zh'); });
+      document.getElementById('lang-en').addEventListener('click', function () { applyLanguage('en'); });
+      document.getElementById('refresh').addEventListener('click', loadMarket);
+
+      applyLanguage(currentLang);
+      loadMarket();
+    })();
+  </script>
+</body>
+</html>

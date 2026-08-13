@@ -8,7 +8,6 @@
     zh: {
       hero: '输入文本，用可插拔内核转换成任意形式（如喵语），也能反向还原。',
       navMarket: '内核市场',
-      back: '← 返回',
       kernelTitle: '转换内核',
       upload: '上传内核',
       download: '下载当前内核',
@@ -16,10 +15,6 @@
       builtin: '内置',
       uploaded: '已上传',
       settings: '内核设置',
-      marketTitle: '内核市场',
-      refresh: '刷新',
-      loadKernel: '加载',
-      noMarket: '市场暂无内核。',
       inputLabel: '输入',
       outputLabel: '输出',
       transform: '转换 →',
@@ -39,7 +34,6 @@
     en: {
       hero: 'Transform text into any form (like Meow) with pluggable kernels — and back.',
       navMarket: 'Kernel Market',
-      back: '← Back',
       kernelTitle: 'Kernel',
       upload: 'Upload kernel',
       download: 'Download kernel',
@@ -47,10 +41,6 @@
       builtin: 'Built-in',
       uploaded: 'Uploaded',
       settings: 'Kernel settings',
-      marketTitle: 'Kernel Market',
-      refresh: 'Refresh',
-      loadKernel: 'Load',
-      noMarket: 'No kernels in the market yet.',
       inputLabel: 'Input',
       outputLabel: 'Output',
       transform: 'Transform →',
@@ -91,7 +81,6 @@
     if (zhBtn) zhBtn.classList.toggle('active', lang === 'zh');
     if (enBtn) enBtn.classList.toggle('active', lang === 'en');
     if (current) { renderTabs(); renderInfo(); renderSettings(); }
-    renderMarket();
   }
 
   /* ---------------- DOM ---------------- */
@@ -100,7 +89,6 @@
   var uploadedLabel = document.getElementById('uploaded-label');
   var kernelInfo = document.getElementById('kernel-info');
   var settingsPanel = document.getElementById('settings');
-  var marketList = document.getElementById('market-list');
   var uploadBtn = document.getElementById('upload-btn');
   var downloadBtn = document.getElementById('download-btn');
   var fileInput = document.getElementById('file-input');
@@ -114,7 +102,6 @@
 
   /* ---------------- 状态 ---------------- */
   var builtin = [];
-  var market = [];
   var uploaded = [];
   var current = null;
   var currentKey = '';
@@ -133,14 +120,6 @@
     return String(s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
-  }
-
-  /* ---------------- 视图切换 ---------------- */
-  function showView(view) {
-    var cv = document.getElementById('view-converter');
-    var mv = document.getElementById('view-market');
-    cv.hidden = (view === 'market');
-    mv.hidden = (view !== 'market');
   }
 
   /* ---------------- 渲染 ---------------- */
@@ -264,37 +243,6 @@
     settingsPanel.appendChild(grid);
   }
 
-  function renderMarket() {
-    if (!marketList) return;
-    marketList.innerHTML = '';
-    if (!market.length) {
-      marketList.innerHTML = '<div class="meta">' + escapeHtml(t('noMarket')) + '</div>';
-      return;
-    }
-    market.forEach(function (k) {
-      var card = document.createElement('div');
-      card.className = 'market-card';
-      var name = M.localized(k.name, currentLang);
-      var desc = M.localized(k.description, currentLang);
-      var author = M.localized(k.author, currentLang);
-      var meta = [k.version && ('v' + k.version), author].filter(Boolean).join(' · ');
-      card.innerHTML =
-        '<div><b>' + escapeHtml(name) + '</b>' +
-        (meta ? ' <span class="meta">' + escapeHtml(meta) + '</span>' : '') + '</div>' +
-        '<div class="meta">' + escapeHtml(desc) + '</div>';
-      var btn = document.createElement('button');
-      btn.className = 'btn';
-      btn.textContent = t('loadKernel');
-      btn.addEventListener('click', function () {
-        uploaded.push(k);
-        applyKernel(k, 'uploaded:' + (uploaded.length - 1));
-        showView('converter');
-      });
-      card.appendChild(btn);
-      marketList.appendChild(card);
-    });
-  }
-
   /* ---------------- 选择内核 ---------------- */
   function applyKernel(kernel, key) {
     current = kernel;
@@ -406,11 +354,6 @@
   document.getElementById('lang-zh').addEventListener('click', function () { applyLanguage('zh'); });
   document.getElementById('lang-en').addEventListener('click', function () { applyLanguage('en'); });
 
-  /* ---------------- 视图切换 ---------------- */
-  document.getElementById('nav-market').addEventListener('click', function () { showView('market'); });
-  document.getElementById('back-converter').addEventListener('click', function () { showView('converter'); });
-  document.getElementById('refresh-market').addEventListener('click', function () { loadMarket(); });
-
   /* ---------------- 初始化 ---------------- */
   applyLanguage(currentLang);
 
@@ -419,6 +362,15 @@
     if (builtin.length) {
       clearError();
       applyKernel(builtin[0], 'builtin:0');
+      try {
+        var pending = localStorage.getItem('pending-kernel');
+        if (pending) {
+          localStorage.removeItem('pending-kernel');
+          var pk = M.compileKernel(pending);
+          uploaded.push(pk);
+          applyKernel(pk, 'uploaded:' + (uploaded.length - 1));
+        }
+      } catch (e) { /* ignore */ }
     } else {
       showError(t('noBuiltinKernels'));
     }
@@ -426,14 +378,4 @@
     showError(t('builtinLoadFailed') + '（' + e.message + '）。' + t('builtinLoadHint'));
   });
 
-  function loadMarket() {
-    M.loadMarketKernels().then(function (kernels) {
-      market = kernels;
-      renderMarket();
-    }).catch(function () {
-      market = [];
-      renderMarket();
-    });
-  }
-  loadMarket();
 })();
