@@ -234,14 +234,15 @@ textarea.meow-flash {
 .kernel-info.info-swap { animation: fadeIn .3s ease; }
 
 .float-meow {
-  position: absolute;
+  position: fixed;
   font-size: 1rem;
   color: var(--accent);
   opacity: 0;
   pointer-events: none;
   user-select: none;
   white-space: nowrap;
-  animation: floatUp 8s ease-in-out;
+  z-index: 1;
+  animation: floatUp 5s ease-in-out;
 }
 
 @keyframes floatUp {
