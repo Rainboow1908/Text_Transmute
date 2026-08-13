@@ -3,6 +3,84 @@
 
   var M = window.MiaoKernels;
 
+  /* ---------------- 多语言 ---------------- */
+  var I18N = {
+    zh: {
+      hero: '输入文本，用可插拔内核转换成任意形式（如喵语），也能反向还原。',
+      kernelTitle: '转换内核',
+      upload: '上传内核',
+      download: '下载当前内核',
+      spec: '内核规范',
+      builtin: '内置',
+      uploaded: '已上传',
+      settings: '内核设置',
+      inputLabel: '输入',
+      outputLabel: '输出',
+      transform: '转换 →',
+      restore: '← 还原',
+      copy: '复制',
+      copied: '已复制',
+      inputPlaceholder: '在这里输入文本…',
+      outputPlaceholder: '转换结果会出现在这里…',
+      footer: '纯静态、零构建，可部署到 GitHub Pages。内核在浏览器本地运行，只上传你信任的内核。',
+      transformFailed: '转换失败：',
+      kernelLoadFailed: '内核加载失败：',
+      readFileFailed: '读取文件失败。',
+      builtinLoadFailed: '无法加载内置内核',
+      noBuiltinKernels: '未找到内置内核文件。',
+      builtinLoadHint: '请通过 http 服务器访问本页，例如在项目目录运行：python -m http.server 8000'
+    },
+    en: {
+      hero: 'Transform text into any form (like Meow) with pluggable kernels — and back.',
+      kernelTitle: 'Kernel',
+      upload: 'Upload kernel',
+      download: 'Download kernel',
+      spec: 'Kernel spec',
+      builtin: 'Built-in',
+      uploaded: 'Uploaded',
+      settings: 'Kernel settings',
+      inputLabel: 'Input',
+      outputLabel: 'Output',
+      transform: 'Transform →',
+      restore: '← Restore',
+      copy: 'Copy',
+      copied: 'Copied',
+      inputPlaceholder: 'Type text here…',
+      outputPlaceholder: 'Result appears here…',
+      footer: 'Static and zero-build, deployable to GitHub Pages. Kernels run locally in your browser — only upload kernels you trust.',
+      transformFailed: 'Transform failed: ',
+      kernelLoadFailed: 'Kernel load failed: ',
+      readFileFailed: 'Failed to read file.',
+      builtinLoadFailed: 'Failed to load built-in kernels',
+      noBuiltinKernels: 'No built-in kernel files found.',
+      builtinLoadHint: 'Please serve this page over HTTP, e.g. run: python -m http.server 8000'
+    }
+  };
+
+  var currentLang = (localStorage.getItem('lang') === 'en') ? 'en' : 'zh';
+
+  function t(key) {
+    return (I18N[currentLang] && I18N[currentLang][key]) || key;
+  }
+
+  function applyLanguage(lang) {
+    currentLang = lang;
+    try { localStorage.setItem('lang', lang); } catch (e) { /* ignore */ }
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n');
+      if (I18N[lang][key] != null) el.textContent = I18N[lang][key];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n-placeholder');
+      if (I18N[lang][key] != null) el.placeholder = I18N[lang][key];
+    });
+    var zhBtn = document.getElementById('lang-zh');
+    var enBtn = document.getElementById('lang-en');
+    if (zhBtn) zhBtn.classList.toggle('active', lang === 'zh');
+    if (enBtn) enBtn.classList.toggle('active', lang === 'en');
+    if (current) { renderTabs(); renderInfo(); renderSettings(); }
+  }
+
   /* ---------------- DOM ---------------- */
   var builtinTabs = document.getElementById('builtin-tabs');
   var uploadedTabs = document.getElementById('uploaded-tabs');
@@ -87,7 +165,7 @@
     kernelInfo.innerHTML =
       '<div><b>' + escapeHtml(current.name) + '</b>' +
       (meta ? ' <span class="meta">' + escapeHtml(meta) + '</span>' : '') + '</div>' +
-      '<div class="meta">' + escapeHtml(current.description || '（无描述）') + '</div>';
+      '<div class="meta">' + escapeHtml(current.description || '') + '</div>';
     kernelInfo.classList.remove('info-swap');
     void kernelInfo.offsetWidth;
     kernelInfo.classList.add('info-swap');
@@ -104,7 +182,7 @@
 
     var head = document.createElement('div');
     head.className = 'settings-head';
-    head.textContent = '内核设置';
+    head.textContent = t('settings');
     settingsPanel.appendChild(head);
 
     var grid = document.createElement('div');
@@ -141,7 +219,6 @@
         control.value = currentParams[s.name] != null ? currentParams[s.name] : s.default;
         control.addEventListener('input', function () { currentParams[s.name] = Number(control.value); });
       } else {
-        // string / 默认
         control = document.createElement('input');
         control.type = 'text';
         control.placeholder = s.placeholder || '';
@@ -203,11 +280,11 @@
         applyKernel(kernel, 'uploaded:' + (uploaded.length - 1));
         clearError();
       } catch (e) {
-        showError('内核加载失败：' + e.message);
+        showError(t('kernelLoadFailed') + e.message);
       }
     };
     reader.onerror = function () {
-      showError('读取文件失败。');
+      showError(t('readFileFailed'));
     };
     reader.readAsText(file, 'utf-8');
   });
@@ -236,7 +313,7 @@
       void output.offsetWidth; // 重新触发动画
       output.classList.add('meow-flash');
     } catch (e) {
-      showError('转换失败：' + e.message);
+      showError(t('transformFailed') + e.message);
     }
   }
 
@@ -254,9 +331,8 @@
     var text = textarea.value;
     if (!text) return;
     function done() {
-      var old = btn.textContent;
-      btn.textContent = '已复制';
-      setTimeout(function () { btn.textContent = old; }, 1200);
+      btn.textContent = t('copied');
+      setTimeout(function () { btn.textContent = t('copy'); }, 1200);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done, function () { fallback(); });
@@ -272,18 +348,24 @@
   copyHuman.addEventListener('click', function () { copyText(humanInput, copyHuman); });
   copyMeow.addEventListener('click', function () { copyText(meowInput, copyMeow); });
 
+  /* ---------------- 语言切换 ---------------- */
+  document.getElementById('lang-zh').addEventListener('click', function () { applyLanguage('zh'); });
+  document.getElementById('lang-en').addEventListener('click', function () { applyLanguage('en'); });
+
   /* ---------------- 初始化 ---------------- */
+  applyLanguage(currentLang);
+
   function init() {
     M.loadBuiltinKernels().then(function (kernels) {
       builtin = kernels;
       if (!builtin.length) {
-        showError('未找到内置内核文件。');
+        showError(t('noBuiltinKernels'));
         return;
       }
       clearError();
       applyKernel(builtin[0], 'builtin:0');
     }).catch(function (e) {
-      showError('无法加载内置内核（' + e.message + '）。请通过 http 服务器访问本页，例如在项目目录运行：python -m http.server 8000');
+      showError(t('builtinLoadFailed') + '（' + e.message + '）。' + t('builtinLoadHint'));
     });
   }
   init();

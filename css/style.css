@@ -308,3 +308,30 @@ textarea.meow-flash {
   font-size: 0.78rem;
   line-height: 1.4;
 }
+
+/* ---------------- 语言切换 ---------------- */
+.lang-switch {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: flex;
+  gap: 4px;
+}
+.lang-btn {
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 2px 8px;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.lang-btn:hover { border-color: var(--accent); color: var(--text); }
+.lang-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #3a2a12;
+  font-weight: 600;
+}

@@ -1,36 +1,40 @@
-# 喵语转换器
+# TextTransmuter
 
-输入人话，转换成 `喵喵喵，喵喵：“喵喵”。喵喵喵！` 这种像话的喵语；也能反向把喵语还原回人话。
+一个**可插拔内核**的文本转换器：上传自定义内核，把文本转换成任意形式（内置「喵话编码」示例，如 `喵喵喵，喵喵：“喵喵”。喵喵喵！`），可逆、可加密。
 纯静态、零构建，可直接部署到 **GitHub Pages**。
+
+[English](README.en.md)
 
 ## 特性
 
-- **双向转换**：人话 ⇄ 喵语（要求内核提供 `encode` 与 `decode` 两个函数）。
-- **可上传内核**：自己写一个 JSON 内核上传，立刻替换转换逻辑。
-- **内置示例内核**：喵话编码（可逆、自带句读、更短）。
-- **密钥加密**：可设密钥加密喵语，无密钥无法还原。
-- **输出语言**：可选「喵」或「Meow」两种输出语言。
-- **内核参数**：内核可声明自定义参数，在页面「内核设置」里调整。
-- **下载内核**：把当前内核导出为 JSON 文件，方便分享/备份。
-- **零依赖**：无构建链、无 npm，只需一个静态文件服务器即可运行。
+- **可插拔内核**：上传一个 JSON 内核立刻替换转换逻辑，内置「喵话编码」示例。
+- **双向转换**：`encode` / `decode` 双向可逆（要求内核提供两个函数）。
+- **自定义参数**：内核可声明参数，页面自动渲染「内核设置」面板。
+- **密钥加密**：可设密钥加密输出，无密钥无法还原。
+- **输出语言**：内置示例支持「喵 / Meow」等多种输出语言。
+- **多语言界面**：中文 / English 切换，记住你的选择。
+- **下载内核**：导出当前内核为 JSON，方便分享 / 备份。
+- **零依赖**：无构建链、无 npm，只需一个静态服务器。
 
 ## 目录结构
 
 ```
-miaomiaomiao2/
-├── index.html            # 页面
+TextTransmuter/
+├── index.html            # 页面（中/英切换）
 ├── css/style.css         # 样式
 ├── js/
 │   ├── kernels.js        # 内核加载/编译/序列化逻辑（浏览器 & Node 通用）
-│   └── app.js            # 页面交互
+│   └── app.js            # 页面交互 + 多语言
 ├── kernels/              # 内置内核文件（JSON，唯一真相，改这里即可改内核）
 │   └── meow-sentence.json
 ├── docs/
 │   ├── kernel-spec.md    # 内核格式规范（唯一文档源，Markdown）
 │   └── kernel-spec.html  # 渲染页面：fetch 上面 .md 用自写渲染器显示 + 下载按钮
 ├── scripts/
-│   └── test-kernels.js      # 内核可逆性回归测试（读取 kernels/*.json）
-└── README.md
+│   └── test-kernels.js   # 内核可逆性回归测试（读取 kernels/*.json）
+├── README.md             # 本文件（中文）
+├── README.en.md          # English
+└── favicon.svg
 ```
 
 ## 本地运行
@@ -45,12 +49,11 @@ python -m http.server 8000
 ## 部署到 GitHub Pages
 
 1. 在 GitHub 新建仓库，把本目录内容推送上去。
-2. 仓库 **Settings → Pages**，把 `Source` 设为 `Deploy from a branch`，
+2. 仓库 **Settings → Pages**，`Source` 设为 `Deploy from a branch`，
    分支选 `main`，目录选 `/ (root)`。
-3. 保存后稍等片刻，访问 `https://<你的用户名>.github.io/<仓库名>/` 即可。
+3. 保存后稍等片刻，访问 `https://<用户名>.github.io/<仓库名>/` 即可。
 
-> 如果想用 `/docs` 目录作为发布源，把 `index.html`、`css/`、`js/`、`docs/`
-> 一并放到 `docs/` 下并调整相对路径即可（本项目默认用根目录）。
+> 页面所有资源都是相对路径，部署在子路径（如 `/TextTransmuter/`）下也能正常加载。
 
 ## 编写自己的内核
 
@@ -65,19 +68,19 @@ python -m http.server 8000
   "params": [
     { "name": "key", "type": "string", "label": "密钥", "default": "" }
   ],
-  "encode": "function(input, params){ /* 人话 -> 喵语，可用 params.key */ }",
-  "decode": "function(input, params){ /* 喵语 -> 人话 */ }"
+  "encode": "function(input, params){ /* 文本 -> 转换结果，可用 params.key */ }",
+  "decode": "function(input, params){ /* 转换结果 -> 文本 */ }"
 }
 ```
 
-- `encode`：`(input: string, params: object) => string`，人话转喵语。
-- `decode`：`(input: string, params: object) => string`，喵语还原人话。
+- `encode`：`(input: string, params: object) => string`，文本转目标形式。
+- `decode`：`(input: string, params: object) => string`，目标形式还原文本。
 - `params`：可选，声明可自定义参数，页面会据此渲染「内核设置」面板。
 - 二者应互逆：`decode(encode(x, p), p) === x`。
 - 出错用 `throw new Error('...')`。
 
 完整规范见 **[docs/kernel-spec.html](docs/kernel-spec.html)**（浏览器打开，内置自写 markdown 渲染器 + 「下载 Markdown」按钮）；
-文档源为 `docs/kernel-spec.md`（唯一源文件，GitHub 上也会自动渲染）。
+文档源为 `docs/kernel-spec.md`（唯一源文件）。
 
 ## 开发
 
