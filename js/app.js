@@ -17,14 +17,14 @@
       settings: '内核设置',
       customOption: '自定义…',
       customPlaceholder: '输入自定义值',
-      inputLabel: '原文',
-      outputLabel: '译文',
+      inputLabel: '原始文本',
+      outputLabel: '转换文本',
       transform: '转换 →',
       restore: '← 还原',
       copy: '复制',
       copied: '已复制',
-      inputPlaceholder: '在这里输入原文…',
-      outputPlaceholder: '译文会出现在这里…',
+      inputPlaceholder: '在这里输入原始文本…',
+      outputPlaceholder: '在这里输入转换文本…',
       footer: '© 2026 Rainboow1908 · 本工具仅供学习与娱乐，转换/加密不保证安全性，请勿用于敏感数据。',
       transformFailed: '转换失败：',
       kernelLoadFailed: '内核加载失败：',
@@ -45,14 +45,14 @@
       settings: 'Kernel settings',
       customOption: 'Custom…',
       customPlaceholder: 'Enter custom value',
-      inputLabel: 'Original',
-      outputLabel: 'Translated',
+      inputLabel: 'Original text',
+      outputLabel: 'Transformed text',
       transform: 'Transform →',
       restore: '← Restore',
       copy: 'Copy',
       copied: 'Copied',
       inputPlaceholder: 'Type original text here…',
-      outputPlaceholder: 'Translated text appears here…',
+      outputPlaceholder: 'Type transformed text here…',
       footer: '© 2026 Rainboow1908 · For learning and entertainment only. Transforms/encryption are not guaranteed secure — do not use for sensitive data.',
       transformFailed: 'Transform failed: ',
       kernelLoadFailed: 'Kernel load failed: ',
@@ -179,6 +179,99 @@
     kernelInfo.classList.add('info-swap');
   }
 
+  /* 自定义下拉组件（主题化的下拉菜单，支持自定义选项） */
+  function createCustomSelect(param) {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'custom-select';
+
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'setting-control custom-select-trigger';
+    var valueSpan = document.createElement('span');
+    valueSpan.className = 'custom-select-value';
+    var arrow = document.createElement('span');
+    arrow.className = 'custom-select-arrow';
+    arrow.textContent = '▾';
+    trigger.appendChild(valueSpan);
+    trigger.appendChild(arrow);
+
+    var customInput = document.createElement('input');
+    customInput.type = 'text';
+    customInput.className = 'setting-control custom-select-input';
+    customInput.placeholder = t('customPlaceholder');
+    customInput.hidden = true;
+
+    var menu = document.createElement('div');
+    menu.className = 'custom-select-menu';
+    menu.hidden = true;
+
+    var options = param.options || [];
+
+    function refreshTrigger() {
+      valueSpan.textContent = currentParams[param.name] || '';
+    }
+
+    function buildMenu() {
+      menu.innerHTML = '';
+      options.forEach(function (opt) {
+        var item = document.createElement('div');
+        item.className = 'custom-select-option' + (opt === currentParams[param.name] ? ' selected' : '');
+        item.textContent = opt;
+        item.addEventListener('click', function () {
+          currentParams[param.name] = opt;
+          refreshTrigger();
+          menu.hidden = true;
+        });
+        menu.appendChild(item);
+      });
+      var customItem = document.createElement('div');
+      customItem.className = 'custom-select-option custom-select-custom';
+      customItem.textContent = t('customOption');
+      customItem.addEventListener('click', function () {
+        menu.hidden = true;
+        trigger.hidden = true;
+        customInput.hidden = false;
+        customInput.value = currentParams[param.name] || '';
+        customInput.focus();
+      });
+      menu.appendChild(customItem);
+    }
+
+    trigger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (menu.hidden) {
+        buildMenu();
+        menu.hidden = false;
+      } else {
+        menu.hidden = true;
+      }
+    });
+
+    customInput.addEventListener('input', function () {
+      currentParams[param.name] = customInput.value;
+      refreshTrigger();
+    });
+    customInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') customInput.blur();
+    });
+    customInput.addEventListener('blur', function () {
+      customInput.hidden = true;
+      trigger.hidden = false;
+      refreshTrigger();
+    });
+
+    document.addEventListener('click', function () {
+      menu.hidden = true;
+    });
+
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(customInput);
+    wrapper.appendChild(menu);
+
+    refreshTrigger();
+    return wrapper;
+  }
+
   function renderSettings() {
     settingsPanel.innerHTML = '';
     var schema = current ? current.params : [];
@@ -206,48 +299,10 @@
       row.appendChild(nameSpan);
 
       var control;
-      var extraControl = null;
+      var isCustomSelect = false;
       if (s.type === 'select') {
-        control = document.createElement('select');
-        (s.options || []).forEach(function (opt) {
-          var o = document.createElement('option');
-          o.value = opt;
-          o.textContent = opt;
-          control.appendChild(o);
-        });
-        var customOpt = document.createElement('option');
-        customOpt.value = '__custom__';
-        customOpt.textContent = t('customOption');
-        control.appendChild(customOpt);
-
-        extraControl = document.createElement('input');
-        extraControl.type = 'text';
-        extraControl.className = 'setting-control';
-        extraControl.placeholder = t('customPlaceholder');
-        extraControl.hidden = true;
-
-        var cur = currentParams[s.name] != null ? currentParams[s.name] : s.default;
-        if ((s.options || []).indexOf(cur) >= 0) {
-          control.value = cur;
-        } else {
-          control.value = '__custom__';
-          extraControl.value = cur;
-          extraControl.hidden = false;
-        }
-
-        control.addEventListener('change', function () {
-          if (control.value === '__custom__') {
-            extraControl.hidden = false;
-            extraControl.focus();
-            currentParams[s.name] = extraControl.value;
-          } else {
-            extraControl.hidden = true;
-            currentParams[s.name] = control.value;
-          }
-        });
-        extraControl.addEventListener('input', function () {
-          currentParams[s.name] = extraControl.value;
-        });
+        control = createCustomSelect(s);
+        isCustomSelect = true;
       } else if (s.type === 'boolean') {
         control = document.createElement('input');
         control.type = 'checkbox';
@@ -265,9 +320,8 @@
         control.value = currentParams[s.name] != null ? currentParams[s.name] : (s.default || '');
         control.addEventListener('input', function () { currentParams[s.name] = control.value; });
       }
-      control.className = 'setting-control';
+      if (!isCustomSelect) control.className = 'setting-control';
       row.appendChild(control);
-      if (extraControl) row.appendChild(extraControl);
 
       var descText = M.localized(s.description, currentLang);
       if (descText) {
