@@ -1,0 +1,8 @@
+{
+  "name": "摩斯喵语",
+  "version": "1.0.0",
+  "description": "经典摩斯码：点=「喵」、划=「喵喵」，元素间「·」，字母间「？」，词间「！」。支持 A-Z、0-9 及部分标点。",
+  "author": "内置示例",
+  "encode": "function morseEncode(input) {\n    const words = input.toUpperCase().split(/\\s+/).filter(Boolean);\n    let out = '';\n    for (let w = 0; w < words.length; w++) {\n      if (w > 0) out += '！';\n      const word = words[w];\n      for (let i = 0; i < word.length; i++) {\n        const code = MORSE_TABLE[word[i]];\n        if (!code) throw new Error('摩斯喵语：不支持的字符「' + word[i] + '」');\n        const parts = [];\n        for (const sym of code) parts.push(sym === '.' ? '喵' : '喵喵');\n        out += parts.join('·');\n        if (i < word.length - 1) out += '？';\n      }\n    }\n    return out;\n  }",
+  "decode": "function morseDecode(input) {\n    let reverse = {};\n    for (const k in MORSE_TABLE) reverse[MORSE_TABLE[k]] = k;\n    const words = input.split('！');\n    let out = '';\n    for (let w = 0; w < words.length; w++) {\n      if (w > 0) out += ' ';\n      const letters = words[w].split('？');\n      for (const letter of letters) {\n        if (!letter) continue;\n        let code = '';\n        for (const s of letter.split('·')) {\n          if (s === '喵') code += '.';\n          else if (s === '喵喵') code += '-';\n          else if (s === '') continue;\n          else throw new Error('摩斯喵语：无法识别的元素「' + s + '」');\n        }\n        const ch = reverse[code];\n        if (ch === undefined) throw new Error('摩斯喵语：未知的摩斯码「' + code + '」');\n        out += ch;\n      }\n    }\n    return out;\n  }"
+}

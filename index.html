@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>喵语转换器</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="hero">
+    <h1>🐱 喵语转换器</h1>
+    <p>输入人话，转换成 <code>喵喵喵？喵喵！</code> 这种喵语；也能把喵语还原回来。</p>
+  </header>
+
+  <main>
+    <!-- 内核选择区 -->
+    <section class="card">
+      <div class="section-head">
+        <h2>转换内核</h2>
+        <div class="toolbar">
+          <button id="upload-btn" class="btn" type="button">⬆ 上传内核</button>
+          <button id="download-btn" class="btn btn-ghost" type="button">⬇ 下载当前内核</button>
+          <a class="btn btn-ghost" href="docs/kernel-spec.md" target="_blank" rel="noopener">📄 内核规范</a>
+        </div>
+        <input id="file-input" type="file" accept=".json,application/json" hidden />
+      </div>
+
+      <div class="tabs">
+        <span class="tab-label">内置</span>
+        <div id="builtin-tabs" class="tab-group"></div>
+        <span class="tab-label" id="uploaded-label" hidden>已上传</span>
+        <div id="uploaded-tabs" class="tab-group"></div>
+      </div>
+
+      <div id="kernel-info" class="kernel-info"></div>
+    </section>
+
+    <!-- 转换区 -->
+    <section class="card">
+      <div class="io-grid">
+        <div class="io-col">
+          <div class="io-head">
+            <label for="human-input">人话</label>
+            <button id="copy-human" class="mini-btn" type="button">复制</button>
+          </div>
+          <textarea id="human-input" rows="7" placeholder="在这里输入人话…例如：你好，世界"></textarea>
+        </div>
+
+        <div class="io-mid">
+          <button id="to-meow" class="btn btn-primary" type="button">转喵语 →</button>
+          <button id="to-human" class="btn" type="button">← 转人话</button>
+        </div>
+
+        <div class="io-col">
+          <div class="io-head">
+            <label for="meow-input">喵语</label>
+            <button id="copy-meow" class="mini-btn" type="button">复制</button>
+          </div>
+          <textarea id="meow-input" rows="7" placeholder="喵语会出现在这里…"></textarea>
+        </div>
+      </div>
+
+      <div id="error-box" class="error-box" hidden></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>纯静态、零构建，可部署到 GitHub Pages。内核在浏览器本地运行，只上传你信任的内核。</p>
+  </footer>
+
+  <script src="js/kernels.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
