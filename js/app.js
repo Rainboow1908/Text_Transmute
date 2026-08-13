@@ -6,7 +6,7 @@
   /* ---------------- 多语言 ---------------- */
   var I18N = {
     zh: {
-      hero: '输入文本，用可插拔内核转换成任意形式（如喵语），也能反向还原。',
+      hero: '输入文本，用可插拔内核转换成任意形式，也能反向还原。',
       navMarket: '内核市场',
       kernelTitle: '转换内核',
       upload: '上传内核',
@@ -15,14 +15,16 @@
       builtin: '内置',
       uploaded: '已上传',
       settings: '内核设置',
+      customOption: '自定义…',
+      customPlaceholder: '输入自定义值',
       inputLabel: '原文',
       outputLabel: '译文',
       transform: '转换 →',
       restore: '← 还原',
       copy: '复制',
       copied: '已复制',
-      inputPlaceholder: '在这里输入文本…',
-      outputPlaceholder: '转换结果会出现在这里…',
+      inputPlaceholder: '在这里输入原文…',
+      outputPlaceholder: '译文会出现在这里…',
       footer: '© 2026 Rainboow1908 · 本工具仅供学习与娱乐，转换/加密不保证安全性，请勿用于敏感数据。',
       transformFailed: '转换失败：',
       kernelLoadFailed: '内核加载失败：',
@@ -32,7 +34,7 @@
       builtinLoadHint: '请通过 http 服务器访问本页，例如在项目目录运行：python -m http.server 8000'
     },
     en: {
-      hero: 'Transform text into any form (like Meow) with pluggable kernels — and back.',
+      hero: 'Transform text into any form with pluggable kernels — and back.',
       navMarket: 'Kernel Market',
       kernelTitle: 'Kernel',
       upload: 'Upload kernel',
@@ -41,14 +43,16 @@
       builtin: 'Built-in',
       uploaded: 'Uploaded',
       settings: 'Kernel settings',
+      customOption: 'Custom…',
+      customPlaceholder: 'Enter custom value',
       inputLabel: 'Original',
       outputLabel: 'Translated',
       transform: 'Transform →',
       restore: '← Restore',
       copy: 'Copy',
       copied: 'Copied',
-      inputPlaceholder: 'Type text here…',
-      outputPlaceholder: 'Result appears here…',
+      inputPlaceholder: 'Type original text here…',
+      outputPlaceholder: 'Translated text appears here…',
       footer: '© 2026 Rainboow1908 · For learning and entertainment only. Transforms/encryption are not guaranteed secure — do not use for sensitive data.',
       transformFailed: 'Transform failed: ',
       kernelLoadFailed: 'Kernel load failed: ',
@@ -202,6 +206,7 @@
       row.appendChild(nameSpan);
 
       var control;
+      var extraControl = null;
       if (s.type === 'select') {
         control = document.createElement('select');
         (s.options || []).forEach(function (opt) {
@@ -210,8 +215,39 @@
           o.textContent = opt;
           control.appendChild(o);
         });
-        control.value = currentParams[s.name] != null ? currentParams[s.name] : s.default;
-        control.addEventListener('change', function () { currentParams[s.name] = control.value; });
+        var customOpt = document.createElement('option');
+        customOpt.value = '__custom__';
+        customOpt.textContent = t('customOption');
+        control.appendChild(customOpt);
+
+        extraControl = document.createElement('input');
+        extraControl.type = 'text';
+        extraControl.className = 'setting-control';
+        extraControl.placeholder = t('customPlaceholder');
+        extraControl.hidden = true;
+
+        var cur = currentParams[s.name] != null ? currentParams[s.name] : s.default;
+        if ((s.options || []).indexOf(cur) >= 0) {
+          control.value = cur;
+        } else {
+          control.value = '__custom__';
+          extraControl.value = cur;
+          extraControl.hidden = false;
+        }
+
+        control.addEventListener('change', function () {
+          if (control.value === '__custom__') {
+            extraControl.hidden = false;
+            extraControl.focus();
+            currentParams[s.name] = extraControl.value;
+          } else {
+            extraControl.hidden = true;
+            currentParams[s.name] = control.value;
+          }
+        });
+        extraControl.addEventListener('input', function () {
+          currentParams[s.name] = extraControl.value;
+        });
       } else if (s.type === 'boolean') {
         control = document.createElement('input');
         control.type = 'checkbox';
@@ -231,6 +267,7 @@
       }
       control.className = 'setting-control';
       row.appendChild(control);
+      if (extraControl) row.appendChild(extraControl);
 
       var descText = M.localized(s.description, currentLang);
       if (descText) {
