@@ -81,6 +81,41 @@
     if (zhBtn) zhBtn.classList.toggle('active', lang === 'zh');
     if (enBtn) enBtn.classList.toggle('active', lang === 'en');
     if (current) { renderTabs(); renderInfo(); renderSettings(); }
+    applyFloatWords();
+  }
+
+  /* ---------------- 背景浮动词（按权重随机） ---------------- */
+  var FLOAT_WORDS = {
+    zh: [
+      { w: '啊这个这个', weight: 1 },
+      { w: '🐟', weight: 1 },
+      { w: '1000万以内最好的网页', weight: 1 },
+      { w: '神了', weight: 3 },
+      { w: '喵', weight: 10 }
+    ],
+    en: [
+      { w: 'Ah, this this', weight: 1 },
+      { w: '🐟', weight: 1 },
+      { w: 'Best webpage under 10M', weight: 1 },
+      { w: 'Amazing', weight: 3 },
+      { w: 'Meow', weight: 10 }
+    ]
+  };
+  function pickFloatWord(items) {
+    var total = 0;
+    for (var i = 0; i < items.length; i++) total += items[i].weight;
+    var r = Math.random() * total;
+    for (var i = 0; i < items.length; i++) {
+      r -= items[i].weight;
+      if (r < 0) return items[i].w;
+    }
+    return items[items.length - 1].w;
+  }
+  function applyFloatWords() {
+    var items = FLOAT_WORDS[currentLang] || FLOAT_WORDS.zh;
+    document.querySelectorAll('.float-meow').forEach(function (el) {
+      el.textContent = pickFloatWord(items);
+    });
   }
 
   /* ---------------- DOM ---------------- */

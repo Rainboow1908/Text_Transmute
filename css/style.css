@@ -235,11 +235,12 @@ textarea.meow-flash {
 
 .float-meow {
   position: absolute;
-  font-size: 1.3rem;
+  font-size: 1rem;
   color: var(--accent);
   opacity: 0;
   pointer-events: none;
   user-select: none;
+  white-space: nowrap;
   animation: floatUp 6s ease-in-out infinite;
 }
 .float-meow.f1 { left: 10%; animation-delay: 0s; }
