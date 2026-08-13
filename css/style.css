@@ -311,6 +311,9 @@ textarea.meow-flash {
   gap: 8px;
   text-align: left;
 }
+.custom-select-trigger[hidden] {
+  display: none;
+}
 .custom-select-arrow {
   color: var(--muted);
   font-size: 0.7rem;
