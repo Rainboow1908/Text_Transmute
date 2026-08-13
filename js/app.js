@@ -112,9 +112,28 @@
     return items[items.length - 1].w;
   }
   function applyFloatWords() {
-    var items = FLOAT_WORDS[currentLang] || FLOAT_WORDS.zh;
-    document.querySelectorAll('.float-meow').forEach(function (el) {
-      el.textContent = pickFloatWord(items);
+    var hero = document.querySelector('.hero');
+    if (!hero) return;
+    // 清除旧字（回收）
+    hero.querySelectorAll('.float-meow').forEach(function (el) { el.remove(); });
+    // 初始 3 个字，错开延迟
+    var delays = [0, 1.7, 3.3];
+    for (var i = 0; i < delays.length; i++) {
+      spawnFloat(hero, delays[i]);
+    }
+  }
+
+  function spawnFloat(hero, delay) {
+    var el = document.createElement('span');
+    el.className = 'float-meow';
+    el.style.left = (5 + Math.random() * 85) + '%';
+    if (delay) el.style.animationDelay = delay + 's';
+    el.textContent = pickFloatWord(FLOAT_WORDS[currentLang] || FLOAT_WORDS.zh);
+    hero.appendChild(el);
+    // 动画结束后回收，再重新生成一个
+    el.addEventListener('animationend', function () {
+      el.remove();
+      spawnFloat(hero, 0);
     });
   }
 

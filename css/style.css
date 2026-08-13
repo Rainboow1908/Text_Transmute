@@ -241,11 +241,8 @@ textarea.meow-flash {
   pointer-events: none;
   user-select: none;
   white-space: nowrap;
-  animation: floatUp 5s ease-in-out infinite;
+  animation: floatUp 5s ease-in-out;
 }
-.float-meow.f1 { left: 10%; animation-delay: 0s; }
-.float-meow.f2 { left: 48%; animation-delay: 1.7s; }
-.float-meow.f3 { left: 82%; animation-delay: 3.3s; }
 
 @keyframes floatUp {
   0% { transform: translateY(40px) scale(.95); opacity: 0; }
