@@ -241,7 +241,7 @@ textarea.meow-flash {
   pointer-events: none;
   user-select: none;
   white-space: nowrap;
-  animation: floatUp 5s ease-in-out;
+  animation: floatUp 8s ease-in-out;
 }
 
 @keyframes floatUp {
