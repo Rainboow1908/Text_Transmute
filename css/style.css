@@ -325,11 +325,16 @@ textarea.meow-flash {
   border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: var(--shadow);
-  z-index: 20;
+  z-index: 1000;
   max-height: 220px;
   overflow-y: auto;
   padding: 4px;
-  animation: fadeIn .15s ease;
+  animation: menuOpen .22s cubic-bezier(.22, 1, .36, 1);
+  transform-origin: top;
+}
+@keyframes menuOpen {
+  from { opacity: 0; transform: translateY(-4px) scaleY(.9); }
+  to { opacity: 1; transform: translateY(0) scaleY(1); }
 }
 .custom-select-option {
   padding: 8px 12px;

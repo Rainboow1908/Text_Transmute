@@ -5,8 +5,8 @@
   },
   "version": "1.0.0",
   "description": {
-    "zh": "复刻 pi.hahaka.com 的「与佛论禅」：AES 加密后映射为佛经风格汉字，输出以「佛曰：」开头，可设密钥（暗号）。",
-    "en": "A port of pi.hahaka.com \"Buddha\" cipher: AES-encrypts then maps to sutra-style characters, prefixed with \"佛曰：\", with an optional key."
+    "zh": "把文本 AES 加密后映射为佛经风格汉字，输出以「佛曰：」开头，可设密钥（暗号）。",
+    "en": "AES-encrypts text then maps it to sutra-style characters, prefixed with \"佛曰：\", with an optional key."
   },
   "author": "内置示例",
   "params": [
