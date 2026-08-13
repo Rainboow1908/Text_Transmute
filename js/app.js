@@ -370,8 +370,14 @@
         if (pending) {
           localStorage.removeItem('pending-kernel');
           var pk = M.compileKernel(pending);
-          uploaded.push(pk);
-          applyKernel(pk, 'uploaded:' + (uploaded.length - 1));
+          var pkName = M.localized(pk.name, 'zh');
+          var exists = uploaded.some(function (k) {
+            return M.localized(k.name, 'zh') === pkName;
+          });
+          if (!exists) {
+            uploaded.push(pk);
+            applyKernel(pk, 'uploaded:' + (uploaded.length - 1));
+          }
         }
       } catch (e) { /* ignore */ }
     } else {

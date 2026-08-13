@@ -117,3 +117,21 @@ decode: (input: string, params: object) => string
 页面在**你的浏览器本地**运行上传的内核。`encode`/`decode` 会被当作函数执行，
 因此**只上传你信任的内核文件**。第 3 节列出的限制只是约定，无法在纯前端
 100% 强制——加载内核前请确认其来源。
+
+## 8. 提交内核到内核市场
+
+想让你的内核出现在「内核市场」页？两种方式：
+
+**方式一：GitHub Pull Request（推荐）**
+
+1. Fork 本仓库。
+2. 把你的内核 JSON 文件放进 `market/` 目录。
+3. 在 `market/index.json` 里登记文件名。
+4. 提交 Pull Request，审核通过后即上线。
+
+**方式二：直接联系作者**
+
+把内核 JSON 发给作者（见仓库联系方式），审核通过后加入市场。
+
+提交前请确认内核满足本规范（尤其第 2 节的多语言要求），并可用
+`node scripts/test-kernels.js` 验证 `encode`/`decode` 可逆。

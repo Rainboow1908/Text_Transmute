@@ -117,3 +117,23 @@ Example:
 Kernels run **locally in your browser**. `encode`/`decode` are executed as
 functions — **only upload kernels you trust**. The §3 limits are conventions,
 not enforceable in a pure frontend; verify a kernel's origin before loading it.
+
+## 8. Submitting a kernel to the market
+
+Want your kernel to appear on the "Kernel Market" page? Two ways:
+
+**Option 1: GitHub Pull Request (recommended)**
+
+1. Fork this repository.
+2. Put your kernel JSON file into the `market/` directory.
+3. Register its filename in `market/index.json`.
+4. Open a Pull Request; it goes live once reviewed and merged.
+
+**Option 2: Contact the author**
+
+Send the kernel JSON to the author (see the repository contact), and it will be
+added after review.
+
+Before submitting, make sure the kernel meets this spec (especially the §2
+multilingual requirement) and that `encode`/`decode` round-trip via
+`node scripts/test-kernels.js`.

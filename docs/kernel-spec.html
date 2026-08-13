@@ -88,7 +88,11 @@
         var s = line.trim();
         if (s.charAt(0) === '|') s = s.slice(1);
         if (s.charAt(s.length - 1) === '|') s = s.slice(0, -1);
-        return s.split('|').map(function (c) { return c.trim(); });
+        // 处理 \| 转义（markdown 表格里表示字面竖线）
+        s = s.replace(/\\\|/g, '\u0000PIPE\u0000');
+        return s.split('|').map(function (c) {
+          return c.replace(/\u0000PIPE\u0000/g, '|').trim();
+        });
       }
 
       function renderTable(rows) {
