@@ -172,8 +172,10 @@ textarea {
   background: #fffefc;
   color: var(--text);
   word-break: break-all;
+  transition: border-color .2s ease, box-shadow .25s ease, background .2s ease;
 }
-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(242, 166, 90, .2); }
+textarea:hover { border-color: #d8cfc2; background: #ffffff; }
+textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(242, 166, 90, .2); background: #ffffff; }
 
 .io-mid {
   display: flex;
@@ -288,7 +290,9 @@ textarea.meow-flash {
   padding: 6px 10px;
   background: #fff;
   color: var(--text);
+  transition: border-color .2s ease, box-shadow .25s ease;
 }
+.setting-control:hover { border-color: #d8cfc2; }
 .setting-control:focus {
   outline: none;
   border-color: var(--accent);
