@@ -355,32 +355,10 @@
   }
 
   /* ---------------- 选择内核 ---------------- */
-  var PARAM_STORE_KEY = 'kernel-params';
-
-  function loadSavedParams(kernelName) {
-    try {
-      var store = JSON.parse(localStorage.getItem(PARAM_STORE_KEY) || '{}');
-      return store[kernelName] || null;
-    } catch (e) { return null; }
-  }
-
-  function saveParams(kernelName, params) {
-    try {
-      var store = JSON.parse(localStorage.getItem(PARAM_STORE_KEY) || '{}');
-      store[kernelName] = params;
-      localStorage.setItem(PARAM_STORE_KEY, JSON.stringify(store));
-    } catch (e) { /* ignore */ }
-  }
-
   function applyKernel(kernel, key) {
-    // 切换前保存当前内核的参数（按内核名）
-    if (current) {
-      saveParams(M.localized(current.name, 'zh'), currentParams);
-    }
     current = kernel;
     currentKey = key;
-    var saved = loadSavedParams(M.localized(kernel.name, 'zh'));
-    currentParams = saved || M.paramsToDefaults(kernel.params);
+    currentParams = M.paramsToDefaults(kernel.params);
     renderTabs();
     renderInfo();
     renderSettings();
