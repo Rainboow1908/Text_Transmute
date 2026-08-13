@@ -203,12 +203,17 @@
 
     var menu = document.createElement('div');
     menu.className = 'custom-select-menu';
-    menu.hidden = true;
 
     var options = param.options || [];
 
     function refreshTrigger() {
       valueSpan.textContent = currentParams[param.name] || '';
+    }
+
+    function setMenuOpen(open) {
+      menu.classList.toggle('open', open);
+      var card = wrapper.closest('.card');
+      if (card) card.classList.toggle('menu-open', open);
     }
 
     function buildMenu() {
@@ -220,7 +225,7 @@
         item.addEventListener('click', function () {
           currentParams[param.name] = opt;
           refreshTrigger();
-          menu.hidden = true;
+          setMenuOpen(false);
         });
         menu.appendChild(item);
       });
@@ -228,7 +233,7 @@
       customItem.className = 'custom-select-option custom-select-custom';
       customItem.textContent = t('customOption');
       customItem.addEventListener('click', function () {
-        menu.hidden = true;
+        setMenuOpen(false);
         trigger.hidden = true;
         customInput.hidden = false;
         customInput.value = currentParams[param.name] || '';
@@ -239,11 +244,11 @@
 
     trigger.addEventListener('click', function (e) {
       e.stopPropagation();
-      if (menu.hidden) {
+      if (!menu.classList.contains('open')) {
         buildMenu();
-        menu.hidden = false;
+        setMenuOpen(true);
       } else {
-        menu.hidden = true;
+        setMenuOpen(false);
       }
     });
 
@@ -261,7 +266,7 @@
     });
 
     document.addEventListener('click', function () {
-      menu.hidden = true;
+      setMenuOpen(false);
     });
 
     wrapper.appendChild(trigger);
