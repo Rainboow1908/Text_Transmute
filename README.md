@@ -7,11 +7,14 @@
 
 ## 特性
 
-- **可插拔内核**：上传一个 JSON 内核立刻替换转换逻辑，内置「喵话编码」示例。
+- **可插拔内核**：上传一个 JSON 内核立刻替换转换逻辑，内置多个示例。
 - **双向转换**：`encode` / `decode` 双向可逆（要求内核提供两个函数）。
+- **内置示例内核**：喵话编码、摩斯密码、佛曰编码。
+- **零宽隐写**：喵话编码可把数据藏在不可见字符里，肉眼只看到一句随输入变化的短喵话。
 - **自定义参数**：内核可声明参数，页面自动渲染「内核设置」面板。
 - **密钥加密**：可设密钥加密输出，无密钥无法还原。
-- **输出语言**：内置示例支持「喵 / Meow」等多种输出语言。
+- **内核市场**：独立页签，浏览并加载更多内核。
+- **元数据多语言**：内核名称 / 描述 / 参数支持中英双语。
 - **多语言界面**：中文 / English 切换，记住你的选择。
 - **下载内核**：导出当前内核为 JSON，方便分享 / 备份。
 - **零依赖**：无构建链、无 npm，只需一个静态服务器。
@@ -25,13 +28,21 @@ TextTransmuter/
 ├── js/
 │   ├── kernels.js        # 内核加载/编译/序列化逻辑（浏览器 & Node 通用）
 │   └── app.js            # 页面交互 + 多语言
-├── kernels/              # 内置内核文件（JSON，唯一真相，改这里即可改内核）
-│   └── meow-sentence.json
+├── kernels/              # 内置内核文件（JSON，唯一真相）
+│   ├── meow-sentence.json
+│   ├── morse.json
+│   └── buddha.json
+├── market/               # 内核市场（内核 JSON + index.json 清单）
+│   ├── index.json
+│   └── reverse.json
 ├── docs/
-│   ├── kernel-spec.md    # 内核格式规范（唯一文档源，Markdown）
-│   └── kernel-spec.html  # 渲染页面：fetch 上面 .md 用自写渲染器显示 + 下载按钮
+│   ├── kernel-spec.md    # 内核格式规范（中文）
+│   ├── kernel-spec.en.md # 内核格式规范（英文）
+│   └── kernel-spec.html  # 渲染页面：fetch .md 用自写渲染器显示 + 下载按钮
 ├── scripts/
-│   └── test-kernels.js   # 内核可逆性回归测试（读取 kernels/*.json）
+│   ├── test-kernels.js     # 内核可逆性回归测试
+│   ├── generate-meow.js    # 重新生成喵话编码内核
+│   └── generate-buddha.js  # 重新生成佛曰内核
 ├── README.md             # 本文件（中文）
 ├── README.en.md          # English
 └── favicon.svg
@@ -57,16 +68,16 @@ python -m http.server 8000
 
 ## 编写自己的内核
 
-内核是一个 **JSON 文件**，含元数据 + 可选参数定义 + 两个 JS 函数源码字符串：
+内核是一个 **JSON 文件**，含元数据（多语言）+ 可选参数定义 + 两个 JS 函数源码字符串：
 
 ```json
 {
-  "name": "我的内核",
+  "name": { "zh": "我的内核", "en": "My Kernel" },
   "version": "1.0.0",
-  "description": "一句话说明",
+  "description": { "zh": "一句话说明", "en": "One-line description" },
   "author": "我",
   "params": [
-    { "name": "key", "type": "string", "label": "密钥", "default": "" }
+    { "name": "key", "type": "string", "label": { "zh": "密钥", "en": "Key" }, "default": "" }
   ],
   "encode": "function(input, params){ /* 文本 -> 转换结果，可用 params.key */ }",
   "decode": "function(input, params){ /* 转换结果 -> 文本 */ }"
@@ -76,6 +87,7 @@ python -m http.server 8000
 - `encode`：`(input: string, params: object) => string`，文本转目标形式。
 - `decode`：`(input: string, params: object) => string`，目标形式还原文本。
 - `params`：可选，声明可自定义参数，页面会据此渲染「内核设置」面板。
+- 元数据 `name`/`description`/`author` 及参数 `label` 等**须支持多语言**（`{zh, en}`）。
 - 二者应互逆：`decode(encode(x, p), p) === x`。
 - 出错用 `throw new Error('...')`。
 
@@ -85,9 +97,14 @@ python -m http.server 8000
 ## 开发
 
 ```bash
-# 回归测试（读取 kernels/*.json，验证各内核 encode/decode 可逆）
+# 回归测试（读取 kernels/*.json + market/*.json，验证各内核 encode/decode 可逆）
 node scripts/test-kernels.js
+
+# 重新生成内核（改动生成脚本后）
+node scripts/generate-meow.js
+node scripts/generate-buddha.js
 ```
 
 > 新增/修改内置内核：直接编辑或新增 `kernels/*.json`，并在 `js/kernels.js` 顶部的
-> `BUILTIN_FILES` 清单里登记文件路径。
+> `BUILTIN_FILES` 清单里登记文件路径。新增市场内核：加入 `market/` 并在
+> `market/index.json` 里登记文件名。

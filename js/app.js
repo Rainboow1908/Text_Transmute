@@ -7,14 +7,19 @@
   var I18N = {
     zh: {
       hero: '输入文本，用可插拔内核转换成任意形式（如喵语），也能反向还原。',
+      navConverter: '转换器',
+      navMarket: '内核市场',
       kernelTitle: '转换内核',
       upload: '上传内核',
       download: '下载当前内核',
       spec: '内核规范',
       builtin: '内置',
-      market: '市场',
       uploaded: '已上传',
       settings: '内核设置',
+      marketTitle: '内核市场',
+      refresh: '刷新',
+      loadKernel: '加载',
+      noMarket: '市场暂无内核。',
       inputLabel: '输入',
       outputLabel: '输出',
       transform: '转换 →',
@@ -33,14 +38,19 @@
     },
     en: {
       hero: 'Transform text into any form (like Meow) with pluggable kernels — and back.',
+      navConverter: 'Converter',
+      navMarket: 'Kernel Market',
       kernelTitle: 'Kernel',
       upload: 'Upload kernel',
       download: 'Download kernel',
       spec: 'Kernel spec',
       builtin: 'Built-in',
-      market: 'Market',
       uploaded: 'Uploaded',
       settings: 'Kernel settings',
+      marketTitle: 'Kernel Market',
+      refresh: 'Refresh',
+      loadKernel: 'Load',
+      noMarket: 'No kernels in the market yet.',
       inputLabel: 'Input',
       outputLabel: 'Output',
       transform: 'Transform →',
@@ -81,15 +91,16 @@
     if (zhBtn) zhBtn.classList.toggle('active', lang === 'zh');
     if (enBtn) enBtn.classList.toggle('active', lang === 'en');
     if (current) { renderTabs(); renderInfo(); renderSettings(); }
+    renderMarket();
   }
 
   /* ---------------- DOM ---------------- */
   var builtinTabs = document.getElementById('builtin-tabs');
-  var marketTabs = document.getElementById('market-tabs');
   var uploadedTabs = document.getElementById('uploaded-tabs');
   var uploadedLabel = document.getElementById('uploaded-label');
   var kernelInfo = document.getElementById('kernel-info');
   var settingsPanel = document.getElementById('settings');
+  var marketList = document.getElementById('market-list');
   var uploadBtn = document.getElementById('upload-btn');
   var downloadBtn = document.getElementById('download-btn');
   var fileInput = document.getElementById('file-input');
@@ -102,9 +113,9 @@
   var errorBox = document.getElementById('error-box');
 
   /* ---------------- 状态 ---------------- */
-  var builtin = [];               // 内置内核（kernels/*.json）
-  var market = [];                // 市场内核（market/*.json）
-  var uploaded = [];              // 用户上传的内核
+  var builtin = [];
+  var market = [];
+  var uploaded = [];
   var current = null;
   var currentKey = '';
   var currentParams = {};
@@ -124,6 +135,21 @@
     });
   }
 
+  /* ---------------- 视图切换 ---------------- */
+  function showView(view) {
+    var cv = document.getElementById('view-converter');
+    var mv = document.getElementById('view-market');
+    var nc = document.getElementById('nav-converter');
+    var nm = document.getElementById('nav-market');
+    if (view === 'market') {
+      cv.hidden = true; mv.hidden = false;
+      nc.classList.remove('active'); nm.classList.add('active');
+    } else {
+      cv.hidden = false; mv.hidden = true;
+      nc.classList.add('active'); nm.classList.remove('active');
+    }
+  }
+
   /* ---------------- 渲染 ---------------- */
   function renderTabs() {
     builtinTabs.innerHTML = '';
@@ -135,17 +161,6 @@
       el.textContent = M.localized(k.name, currentLang);
       el.addEventListener('click', function () { selectBuiltin(i); });
       builtinTabs.appendChild(el);
-    });
-
-    marketTabs.innerHTML = '';
-    market.forEach(function (k, i) {
-      var el = document.createElement('button');
-      el.type = 'button';
-      el.className = 'tab';
-      el.textContent = M.localized(k.name, currentLang);
-      el.title = M.localized(k.description, currentLang);
-      el.addEventListener('click', function () { selectMarket(i); });
-      marketTabs.appendChild(el);
     });
 
     uploadedTabs.innerHTML = '';
@@ -256,6 +271,37 @@
     settingsPanel.appendChild(grid);
   }
 
+  function renderMarket() {
+    if (!marketList) return;
+    marketList.innerHTML = '';
+    if (!market.length) {
+      marketList.innerHTML = '<div class="meta">' + escapeHtml(t('noMarket')) + '</div>';
+      return;
+    }
+    market.forEach(function (k) {
+      var card = document.createElement('div');
+      card.className = 'market-card';
+      var name = M.localized(k.name, currentLang);
+      var desc = M.localized(k.description, currentLang);
+      var author = M.localized(k.author, currentLang);
+      var meta = [k.version && ('v' + k.version), author].filter(Boolean).join(' · ');
+      card.innerHTML =
+        '<div><b>' + escapeHtml(name) + '</b>' +
+        (meta ? ' <span class="meta">' + escapeHtml(meta) + '</span>' : '') + '</div>' +
+        '<div class="meta">' + escapeHtml(desc) + '</div>';
+      var btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.textContent = t('loadKernel');
+      btn.addEventListener('click', function () {
+        uploaded.push(k);
+        applyKernel(k, 'uploaded:' + (uploaded.length - 1));
+        showView('converter');
+      });
+      card.appendChild(btn);
+      marketList.appendChild(card);
+    });
+  }
+
   /* ---------------- 选择内核 ---------------- */
   function applyKernel(kernel, key) {
     current = kernel;
@@ -266,11 +312,6 @@
     renderSettings();
   }
   function selectBuiltin(i) { applyKernel(builtin[i], 'builtin:' + i); }
-  function selectMarket(i) {
-    var kernel = market[i];
-    uploaded.push(kernel);
-    applyKernel(kernel, 'uploaded:' + (uploaded.length - 1));
-  }
   function selectUploaded(i) { applyKernel(uploaded[i], 'uploaded:' + i); }
   function removeUploaded(i) {
     uploaded.splice(i, 1);
@@ -372,6 +413,11 @@
   document.getElementById('lang-zh').addEventListener('click', function () { applyLanguage('zh'); });
   document.getElementById('lang-en').addEventListener('click', function () { applyLanguage('en'); });
 
+  /* ---------------- 导航切换 ---------------- */
+  document.getElementById('nav-converter').addEventListener('click', function () { showView('converter'); });
+  document.getElementById('nav-market').addEventListener('click', function () { showView('market'); });
+  document.getElementById('refresh-market').addEventListener('click', function () { loadMarket(); });
+
   /* ---------------- 初始化 ---------------- */
   applyLanguage(currentLang);
 
@@ -387,10 +433,14 @@
     showError(t('builtinLoadFailed') + '（' + e.message + '）。' + t('builtinLoadHint'));
   });
 
-  M.loadMarketKernels().then(function (kernels) {
-    market = kernels;
-    renderTabs();
-  }).catch(function () {
-    // 市场加载失败时静默忽略（不影响主体功能）
-  });
+  function loadMarket() {
+    M.loadMarketKernels().then(function (kernels) {
+      market = kernels;
+      renderMarket();
+    }).catch(function () {
+      market = [];
+      renderMarket();
+    });
+  }
+  loadMarket();
 })();

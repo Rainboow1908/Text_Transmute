@@ -15,12 +15,17 @@
     </div>
     <h1>TextTransmuter</h1>
     <p data-i18n="hero">输入文本，用可插拔内核转换成任意形式（如喵语），也能反向还原。</p>
+    <nav class="page-nav">
+      <button id="nav-converter" class="nav-tab active" type="button" data-i18n="navConverter">转换器</button>
+      <button id="nav-market" class="nav-tab" type="button" data-i18n="navMarket">内核市场</button>
+    </nav>
     <span class="float-meow f1">喵</span>
     <span class="float-meow f2">喵</span>
     <span class="float-meow f3">喵</span>
   </header>
 
-  <main>
+  <!-- 转换器视图 -->
+  <main id="view-converter">
     <!-- 内核选择区 -->
     <section class="card">
       <div class="section-head">
@@ -36,8 +41,6 @@
       <div class="tabs">
         <span class="tab-label" data-i18n="builtin">内置</span>
         <div id="builtin-tabs" class="tab-group"></div>
-        <span class="tab-label" data-i18n="market">市场</span>
-        <div id="market-tabs" class="tab-group"></div>
         <span class="tab-label" id="uploaded-label" data-i18n="uploaded" hidden>已上传</span>
         <div id="uploaded-tabs" class="tab-group"></div>
       </div>
@@ -73,6 +76,17 @@
       </div>
 
       <div id="error-box" class="error-box" hidden></div>
+    </section>
+  </main>
+
+  <!-- 内核市场视图 -->
+  <main id="view-market" hidden>
+    <section class="card">
+      <div class="section-head">
+        <h2 data-i18n="marketTitle">内核市场</h2>
+        <button id="refresh-market" class="btn btn-ghost" type="button" data-i18n="refresh">刷新</button>
+      </div>
+      <div id="market-list" class="market-list"></div>
     </section>
   </main>
 

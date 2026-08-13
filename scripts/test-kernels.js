@@ -42,6 +42,8 @@ roundtrip(meow, unicode, {}, '喵话(默认)');
 roundtrip(meow, unicode, { key: 'secret-123' }, '喵话(密钥)');
 roundtrip(meow, unicode, { lang: 'Meow' }, '喵话(Meow)');
 roundtrip(meow, unicode, { key: 'miao', lang: 'Meow' }, '喵话(密钥+Meow)');
+roundtrip(meow, unicode, { zeroWidth: true }, '喵话(零宽)');
+roundtrip(meow, unicode, { key: 'k', zeroWidth: true }, '喵话(零宽+密钥)');
 
 // 摩斯密码（仅 A-Z 0-9 标点，输出统一大写）
 roundtrip(morse, ['', 'SOS', 'HELLO WORLD', 'A-Z 0-9', 'HELLO, WORLD!', '123'], {}, '摩斯(默认)');
