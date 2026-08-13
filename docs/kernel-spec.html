@@ -8,112 +8,220 @@
   <link rel="stylesheet" href="../css/style.css" />
   <style>
     .doc { max-width: 820px; margin: 0 auto; padding: 32px 20px 64px; }
+    .doc-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
     .doc h1 { font-size: 1.6rem; margin: 0 0 4px; }
-    .doc .sub { color: var(--muted); margin: 0 0 24px; }
     .doc h2 { margin-top: 28px; font-size: 1.15rem; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    .doc h3 { margin-top: 20px; font-size: 1.02rem; }
     .doc table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.92rem; }
     .doc th, .doc td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
     .doc th { background: #fbf9f5; }
     .doc pre { background: #2b2a28; color: #f6f4f1; padding: 14px; border-radius: 10px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
     .doc code { font-family: ui-monospace, "Consolas", "Courier New", monospace; }
     .doc p code, .doc li code, .doc td code { background: #fff3e2; padding: 1px 6px; border-radius: 4px; color: var(--accent-dark); font-size: 0.9em; }
-    .doc .note { background: #fdf3e7; border-left: 3px solid var(--accent); padding: 10px 14px; border-radius: 6px; margin: 14px 0; }
-    .doc .warn { background: #fdecec; border-left: 3px solid var(--danger); padding: 10px 14px; border-radius: 6px; margin: 14px 0; }
-    .doc .back { display: inline-block; margin-bottom: 16px; }
+    .doc blockquote {
+      background: #fdf3e7;
+      border-left: 3px solid var(--accent);
+      margin: 14px 0;
+      padding: 10px 14px;
+      border-radius: 6px;
+      color: var(--muted);
+    }
     .doc ul, .doc ol { padding-left: 22px; }
     .doc li { margin: 4px 0; }
+    .doc hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+    .doc .warn {
+      background: #fdecec;
+      border-left: 3px solid var(--danger);
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin: 14px 0;
+      color: var(--danger);
+    }
   </style>
 </head>
 <body>
   <div class="doc">
-    <a class="btn btn-ghost back" href="../index.html">← 返回转换器</a>
-    <h1>喵语转换内核规范</h1>
-    <p class="sub">一个「转换内核」（下称内核）定义了 <b>人话 ⇄ 喵语</b> 的转换规则。内核是一个 <b>UTF-8 编码的 JSON 文件</b>，上传到页面即可替换当前转换逻辑。</p>
-
-    <h2>1. 字段</h2>
-    <table>
-      <thead>
-        <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><code>name</code></td><td>string</td><td>是</td><td>内核名称，展示用（如 <code>喵话编码</code>）</td></tr>
-        <tr><td><code>version</code></td><td>string</td><td>否</td><td>版本号，如 <code>1.1.0</code></td></tr>
-        <tr><td><code>description</code></td><td>string</td><td>否</td><td>一句话描述转换原理</td></tr>
-        <tr><td><code>author</code></td><td>string</td><td>否</td><td>作者名</td></tr>
-        <tr><td><code>params</code></td><td>array</td><td>否</td><td>自定义参数定义（见第 3 节），决定页面「内核设置」面板</td></tr>
-        <tr><td><code>encode</code></td><td>string</td><td>是</td><td>JS 函数源码，人话 → 喵语</td></tr>
-        <tr><td><code>decode</code></td><td>string</td><td>是</td><td>JS 函数源码，喵语 → 人话</td></tr>
-      </tbody>
-    </table>
-    <div class="note"><code>encode</code> / <code>decode</code> 的值是一段 <b>JavaScript 函数源码字符串</b>（可以是 <code>function(x){...}</code> 或箭头函数 <code>(x)=&gt;{...}</code>）。</div>
-
-    <h2>2. 函数签名与约束</h2>
-    <pre><code>encode: (input: string, params: object) =&gt; string
-decode: (input: string, params: object) =&gt; string</code></pre>
-    <ul>
-      <li><code>params</code> 是<b>当前参数值的对象</b>，键来自第 3 节 <code>params</code> 定义里每个 <code>name</code>。例如声明了密钥参数 <code>key</code>，则函数内用 <code>params.key</code> 读取。内核没有 <code>params</code> 定义时，第二个参数为 <code>{}</code>。</li>
-      <li><b>纯函数</b>：只依赖传入的参数，不访问 <code>window</code> / <code>document</code> / 网络 / 文件 / 时间，不修改外部状态。</li>
-      <li><b>可用内置对象</b>：<code>String</code>、<code>Array</code>、<code>Object</code>、<code>Number</code>、<code>Math</code>、<code>JSON</code>、<code>RegExp</code>。</li>
-      <li><b>禁止</b>：<code>require</code> / <code>import</code> / <code>eval</code> / <code>Function</code> 构造器（避免递归逃逸）、任何 DOM 或 IO 操作。</li>
-      <li><b>自包含</b>：函数体必须自带所有依赖（辅助函数、映射表等），不能引用函数外定义的变量——因为函数会被序列化进 JSON、上传后重新编译。</li>
-      <li><b>互逆</b>：对内核声称支持的输入范围，应满足 <code>decode(encode(x, p), p) === x</code>（相同 <code>params</code> 下）。</li>
-      <li><b>报错</b>：遇到无法处理的输入，用 <code>throw new Error('...')</code> 抛出，页面会捕获并以红色提示显示。</li>
-    </ul>
-
-    <h2>3. 参数定义（params）</h2>
-    <p><code>params</code> 是一个数组，每个元素定义一个可在页面「内核设置」里调整的参数：</p>
-    <table>
-      <thead>
-        <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><code>name</code></td><td>string</td><td>是</td><td>参数名，也是 <code>params</code> 对象的键</td></tr>
-        <tr><td><code>type</code></td><td>string</td><td>是</td><td>控件类型：<code>string</code> / <code>number</code> / <code>select</code> / <code>boolean</code></td></tr>
-        <tr><td><code>label</code></td><td>string</td><td>否</td><td>界面显示名（缺省用 <code>name</code>）</td></tr>
-        <tr><td><code>default</code></td><td>any</td><td>否</td><td>默认值</td></tr>
-        <tr><td><code>options</code></td><td>array</td><td>否</td><td><code>type=select</code> 时的可选项列表</td></tr>
-        <tr><td><code>placeholder</code></td><td>string</td><td>否</td><td><code>type=string</code> 时的占位提示</td></tr>
-        <tr><td><code>description</code></td><td>string</td><td>否</td><td>辅助说明</td></tr>
-      </tbody>
-    </table>
-    <pre><code>"params": [
-  { "name": "key",  "type": "string",  "label": "密钥",     "default": "", "placeholder": "留空则不加密" },
-  { "name": "lang", "type": "select",  "label": "输出语言", "options": ["喵", "Meow"], "default": "喵" },
-  { "name": "upper", "type": "boolean", "label": "大写",     "default": false },
-  { "name": "shift", "type": "number",  "label": "位移",     "default": 0 }
-]</code></pre>
-
-    <h2>4. 完整示例（最小演示：位移 + 大写）</h2>
-    <pre><code>{
-  "name": "位移演示",
-  "version": "1.0.0",
-  "description": "演示 params 用法：按位移量平移字符码点。",
-  "author": "示例",
-  "params": [
-    { "name": "shift", "type": "number", "label": "位移", "default": 0 },
-    { "name": "upper", "type": "boolean", "label": "大写输出", "default": false }
-  ],
-  "encode": "function(input, p){ var n=(p&amp;&amp;p.shift)||0; var s=''; for(var i=0;i&lt;input.length;i++){ s+=String.fromCharCode(input.charCodeAt(i)+n); } return p&amp;&amp;p.upper? s.toUpperCase(): s; }",
-  "decode": "function(input, p){ var n=(p&amp;&amp;p.shift)||0; var s=''; for(var i=0;i&lt;input.length;i++){ s+=String.fromCharCode(input.charCodeAt(i)-n); } return s; }"
-}</code></pre>
-    <div class="note">完整的内置「喵话编码」内核（含密钥加密 + 输出语言）见 <code>kernels/meow-sentence.json</code>。</div>
-
-    <h2>5. 内置示例内核</h2>
-    <table>
-      <thead>
-        <tr><th>内核</th><th>参数</th><th>说明</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>喵话编码</td>
-          <td><code>key</code>(密钥)、<code>lang</code>(输出语言：喵 / Meow)</td>
-          <td>每个 UTF-16 码元转 16 bit，整串按每 5 bit 一组编码成「若干个“词” + 一个标点」，8 标点 × 4 词数 = 32 进制。<code>key</code> 非空时用密钥流对码元 XOR 加密（解码需相同密钥）；<code>lang</code> 决定“词”与标点集合。可逆、更短</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h2>6. 安全说明</h2>
-    <div class="warn">页面在<b>你的浏览器本地</b>运行上传的内核。<code>encode</code>/<code>decode</code> 会被当作函数执行，因此<b>只上传你信任的内核文件</b>。第 2 节列出的限制只是约定，无法在纯前端 100% 强制——加载内核前请确认其来源。</div>
+    <div class="doc-toolbar">
+      <a class="btn btn-ghost" href="../index.html">← 返回转换器</a>
+      <button id="download-md" class="btn" type="button">下载 Markdown</button>
+    </div>
+    <div id="content">加载中…</div>
   </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ---------- 转义层：先转义 HTML，再按 markdown 语法渲染 ---------- */
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      // 行内语法：`code`、**粗体**、[文本](链接)
+      function inline(s) {
+        s = escapeHtml(s);
+        s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+        s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+        s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2">$1</a>');
+        return s;
+      }
+
+      function parseRow(line) {
+        var s = line.trim();
+        if (s.charAt(0) === '|') s = s.slice(1);
+        if (s.charAt(s.length - 1) === '|') s = s.slice(0, -1);
+        return s.split('|').map(function (c) { return c.trim(); });
+      }
+
+      function renderTable(rows) {
+        var header = parseRow(rows[0]);
+        var bodyStart = 1;
+        if (rows[1] && /^\|[\s:|-]+\|?$/.test(rows[1].trim())) bodyStart = 2;
+        var html = '<table><thead><tr>';
+        header.forEach(function (c) { html += '<th>' + inline(c) + '</th>'; });
+        html += '</tr></thead><tbody>';
+        for (var r = bodyStart; r < rows.length; r++) {
+          var cells = parseRow(rows[r]);
+          html += '<tr>';
+          cells.forEach(function (c) { html += '<td>' + inline(c) + '</td>'; });
+          html += '</tr>';
+        }
+        return html + '</tbody></table>';
+      }
+
+      function renderMarkdown(src) {
+        var codeBlocks = [];
+        // 先取出围栏代码块，避免其内容被当作普通文本处理
+        src = src.replace(/```([\s\S]*?)```/g, function (m, inner) {
+          inner = inner.replace(/^\w+\n/, '');            // 去掉语言标识行
+          inner = inner.replace(/^\n/, '').replace(/\n$/, '');
+          var idx = codeBlocks.push('<pre><code>' + escapeHtml(inner) + '</code></pre>');
+          return '\u0000CODE' + (idx - 1) + '\u0000';
+        });
+
+        var lines = src.split('\n');
+        var out = [];
+        var i = 0;
+
+        while (i < lines.length) {
+          var t = lines[i].trim();
+
+          var cm = t.match(/^\u0000CODE(\d+)\u0000$/);
+          if (cm) { out.push(codeBlocks[+cm[1]]); i++; continue; }
+
+          if (t === '') { i++; continue; }
+
+          if (/^(-{3,}|\*{3,})$/.test(t)) { out.push('<hr>'); i++; continue; }
+
+          var h = t.match(/^(#{1,6})\s+(.*)$/);
+          if (h) { out.push('<h' + h[1].length + '>' + inline(h[2]) + '</h' + h[1].length + '>'); i++; continue; }
+
+          if (t.charAt(0) === '|') {
+            var rows = [];
+            while (i < lines.length && lines[i].trim().charAt(0) === '|') { rows.push(lines[i].trim()); i++; }
+            out.push(renderTable(rows));
+            continue;
+          }
+
+          if (/^[-*+]\s+/.test(t)) {
+            var items = [];
+            while (i < lines.length) {
+              var lt = lines[i].trim();
+              if (/^[-*+]\s+/.test(lt)) {
+                items.push(inline(lt.replace(/^[-*+]\s+/, '')));
+                i++;
+              } else if (lt !== '' && /^[ \t]/.test(lines[i]) && items.length) {
+                items[items.length - 1] += ' ' + inline(lt);
+                i++;
+              } else {
+                break;
+              }
+            }
+            out.push('<ul>' + items.map(function (it) { return '<li>' + it + '</li>'; }).join('') + '</ul>');
+            continue;
+          }
+
+          if (/^\d+\.\s+/.test(t)) {
+            var oitems = [];
+            while (i < lines.length) {
+              var lt2 = lines[i].trim();
+              if (/^\d+\.\s+/.test(lt2)) {
+                oitems.push(inline(lt2.replace(/^\d+\.\s+/, '')));
+                i++;
+              } else if (lt2 !== '' && /^[ \t]/.test(lines[i]) && oitems.length) {
+                oitems[oitems.length - 1] += ' ' + inline(lt2);
+                i++;
+              } else {
+                break;
+              }
+            }
+            out.push('<ol>' + oitems.map(function (it) { return '<li>' + it + '</li>'; }).join('') + '</ol>');
+            continue;
+          }
+
+          if (t.charAt(0) === '>') {
+            var q = [];
+            while (i < lines.length && lines[i].trim().charAt(0) === '>') {
+              q.push(lines[i].trim().replace(/^>\s?/, ''));
+              i++;
+            }
+            out.push('<blockquote>' + inline(q.join(' ')) + '</blockquote>');
+            continue;
+          }
+
+          var para = [];
+          while (i < lines.length && lines[i].trim() !== '') {
+            para.push(lines[i].trim());
+            i++;
+          }
+          out.push('<p>' + inline(para.join(' ')) + '</p>');
+        }
+
+        return out.join('\n');
+      }
+
+      /* ---------- 页面逻辑：fetch md → 渲染 → 下载 ---------- */
+      var content = document.getElementById('content');
+      var mdSource = '';
+
+      fetch('kernel-spec.md')
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        })
+        .then(function (text) {
+          mdSource = text;
+          content.innerHTML = renderMarkdown(text);
+        })
+        .catch(function (e) {
+          content.innerHTML = '<div class="warn">加载内核规范失败：' + escapeHtml(e.message) + '</div>';
+        });
+
+      document.getElementById('download-md').addEventListener('click', function () {
+        if (!mdSource) return;
+        var blob = new Blob([mdSource], { type: 'text/markdown;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'kernel-spec.md';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+    })();
+  </script>
 </body>
 </html>
