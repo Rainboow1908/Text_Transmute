@@ -246,10 +246,10 @@ textarea.meow-flash {
 }
 
 @keyframes floatUp {
-  0% { transform: translateY(22px) scale(.95); opacity: 0; }
+  0% { transform: translateY(10px) scale(.98); opacity: 0; }
   12% { opacity: .75; }
   70% { opacity: .65; }
-  100% { transform: translateY(-22px) scale(1.05); opacity: 0; }
+  100% { transform: translateY(-10px) scale(1.02); opacity: 0; }
 }
 
 /* ---------------- 内核设置面板 ---------------- */
