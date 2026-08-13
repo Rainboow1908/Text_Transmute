@@ -14,7 +14,16 @@ const encodeSrc = `function(input, params) {
     '喵':   { word: '喵',   punct: ['，', '。', '！', '？', '：', '；', '、', '…'] },
     'Meow': { word: 'Meow', punct: [',', '.', '!', '?', ':', ';', '-', '~'] }
   };
-  var cfg = LANGS[p.lang] || LANGS['喵'];
+  var cfg;
+  if (LANGS[p.lang]) {
+    cfg = LANGS[p.lang];
+  } else {
+    var ascii = /^[\x00-\x7F]+$/.test(p.lang || '');
+    cfg = {
+      word: p.lang || '喵',
+      punct: ascii ? [',', '.', '!', '?', ':', ';', '-', '~'] : ['，', '。', '！', '？', '：', '；', '、', '…']
+    };
+  }
   var word = cfg.word, P = cfg.punct;
   function hashSeed(s) { var h = 2166136261 >>> 0; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ (a >>> 15), 1 | a); t = t + Math.imul(t ^ (t >>> 7), 61 | t) ^ t; return ((t ^ (t >>> 14)) >>> 0); }; }
@@ -60,7 +69,16 @@ const decodeSrc = `function(input, params) {
     '喵':   { word: '喵',   punct: ['，', '。', '！', '？', '：', '；', '、', '…'] },
     'Meow': { word: 'Meow', punct: [',', '.', '!', '?', ':', ';', '-', '~'] }
   };
-  var cfg = LANGS[p.lang] || LANGS['喵'];
+  var cfg;
+  if (LANGS[p.lang]) {
+    cfg = LANGS[p.lang];
+  } else {
+    var ascii = /^[\x00-\x7F]+$/.test(p.lang || '');
+    cfg = {
+      word: p.lang || '喵',
+      punct: ascii ? [',', '.', '!', '?', ':', ';', '-', '~'] : ['，', '。', '！', '？', '：', '；', '、', '…']
+    };
+  }
   var word = cfg.word, P = cfg.punct;
   function hashSeed(s) { var h = 2166136261 >>> 0; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ (a >>> 15), 1 | a); t = t + Math.imul(t ^ (t >>> 7), 61 | t) ^ t; return ((t ^ (t >>> 14)) >>> 0); }; }
@@ -118,7 +136,7 @@ const kernel = {
   author: '内置示例',
   params: [
     { name: 'key', type: 'string', label: { zh: '密钥', en: 'Key' }, default: '', placeholder: { zh: '留空则不加密', en: 'Leave empty for no encryption' }, description: { zh: '非空时用密钥对内容加密，解码需要相同的密钥。', en: 'When non-empty, encrypts with the key; decoding needs the same key.' } },
-    { name: 'lang', type: 'select', label: { zh: '输出语言', en: 'Output language' }, options: ['喵', 'Meow'], default: '喵', description: { zh: '决定喵语使用的“词”与标点。', en: 'The word and punctuation set used.' } },
+    { name: 'lang', type: 'select', label: { zh: '输出语言', en: 'Output language' }, options: ['喵', 'Meow'], default: '喵', description: { zh: '决定喵语使用的“词”与标点；可自定义任意语言（词），标点按是否为纯英文自动选择。', en: 'The word and punctuation set; you can customize the word, punctuation auto-picks by ASCII or Chinese.' } },
     { name: 'zeroWidth', type: 'boolean', label: { zh: '零宽隐写', en: 'Zero-width' }, default: false, description: { zh: '开启后数据藏在不可见字符里，肉眼只看到一句随输入变化的短喵话。注意：部分平台（聊天软件、表单等）可能会过滤或丢失零宽字符。', en: 'Hides data in invisible characters; only a short input-dependent sentence is visible. Note: some platforms may strip zero-width characters.' } }
   ],
   encode: encodeSrc,
