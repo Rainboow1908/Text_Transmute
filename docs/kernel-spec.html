@@ -60,6 +60,7 @@
     <div id="content">加载中…</div>
   </div>
 
+  <script src="../js/float-words.js"></script>
   <script>
     (function () {
       'use strict';
@@ -207,6 +208,7 @@
         lang = l;
         document.getElementById('lang-zh').classList.toggle('active', l === 'zh');
         document.getElementById('lang-en').classList.toggle('active', l === 'en');
+        window.FloatWords.start(l);
         content.innerHTML = '加载中…';
         fetch(FILES[l])
           .then(function (r) {
