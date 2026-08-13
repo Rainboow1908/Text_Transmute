@@ -53,9 +53,11 @@ TextTransmuter/
 内置内核通过 fetch 从 `kernels/*.json` 加载，需要本地 HTTP 服务器（不能直接双击 file:// 打开）：
 
 ```bash
-python -m http.server 8000
+python server.py
 # 打开 http://localhost:8000
 ```
+
+> `server.py` 会给所有响应加 `Cache-Control: no-store`，避免浏览器缓存旧的内核文件。若用 `python -m http.server`，改完内核后需强制刷新（Ctrl+Shift+R）才能看到新版本。
 
 ## 部署到 GitHub Pages
 

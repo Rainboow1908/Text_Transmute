@@ -53,9 +53,11 @@ TextTransmuter/
 Built-in kernels are fetched from `kernels/*.json`, so you need a local HTTP server (opening `index.html` via `file://` won't work):
 
 ```bash
-python -m http.server 8000
+python server.py
 # open http://localhost:8000
 ```
+
+> `server.py` adds `Cache-Control: no-store` to every response so the browser won't cache stale kernel files. With `python -m http.server`, force-refresh (Ctrl+Shift+R) after editing kernels to see the new version.
 
 ## Deploy to GitHub Pages
 

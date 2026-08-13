@@ -120,7 +120,7 @@
    * ------------------------------------------------------------------ */
   function loadBuiltinKernels() {
     return Promise.all(BUILTIN_FILES.map(function (url) {
-      return fetch(url).then(function (r) {
+      return fetch(url, { cache: 'no-store' }).then(function (r) {
         if (!r.ok) throw new Error(url + ' 加载失败（HTTP ' + r.status + '）');
         return r.text();
       }).then(compileKernel);
@@ -131,14 +131,14 @@
    * 从内核市场加载内核：market/index.json 列出文件名，逐个 fetch 编译
    * ------------------------------------------------------------------ */
   function loadMarketKernels() {
-    return fetch('market/index.json')
+    return fetch('market/index.json', { cache: 'no-store' })
       .then(function (r) {
         if (!r.ok) throw new Error('market/index.json 加载失败（HTTP ' + r.status + '）');
         return r.json();
       })
       .then(function (files) {
         return Promise.all(files.map(function (f) {
-          return fetch('market/' + f).then(function (r) {
+          return fetch('market/' + f, { cache: 'no-store' }).then(function (r) {
             if (!r.ok) throw new Error('market/' + f + ' 加载失败（HTTP ' + r.status + '）');
             return r.text();
           }).then(compileKernel);
