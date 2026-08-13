@@ -1,8 +1,29 @@
 {
   "name": "喵话编码",
-  "version": "1.0.0",
-  "description": "把文本按每 5 个比特编码成「若干个“喵” + 一个中文标点」，8 种标点 × 4 种喵数 = 32 进制，输出像一句有句读的喵话，可逆且更短。",
+  "version": "1.1.0",
+  "description": "把文本按每 5 个比特编码成「若干个“词” + 一个标点」，可选密钥加密、可选输出语言（喵 / Meow），可逆且更短。",
   "author": "内置示例",
-  "encode": "function sentenceEncode(input) {\n    // 8 种标点：逗号、句号、感叹号、问号、冒号、分号、顿号、省略号\n    var P = ['，', '。', '！', '？', '：', '；', '、', '…'];\n    var bits = '';\n    for (var i = 0; i < input.length; i++) {\n      bits += input.charCodeAt(i).toString(2).padStart(16, '0');\n    }\n    if (bits === '') return '';\n    var pad = (5 - (bits.length % 5)) % 5;\n    bits += '0'.repeat(pad);\n    var out = '';\n    for (var j = 0; j < bits.length; j += 5) {\n      var d = parseInt(bits.substr(j, 5), 2);\n      out += '喵'.repeat((d % 4) + 1) + P[d >> 2];\n    }\n    return out;\n  }",
-  "decode": "function sentenceDecode(input) {\n    var P = ['，', '。', '！', '？', '：', '；', '、', '…'];\n    var bits = '';\n    var count = 0;\n    for (var i = 0; i < input.length; i++) {\n      var ch = input[i];\n      if (ch === '喵') { count++; continue; }\n      var idx = P.indexOf(ch);\n      if (idx >= 0) {\n        var n = count;\n        count = 0;\n        if (n < 1 || n > 4) throw new Error('喵话编码：喵的数量「' + n + '」超出 1~4');\n        bits += (idx * 4 + (n - 1)).toString(2).padStart(5, '0');\n        continue;\n      }\n      if (/\\s/.test(ch)) continue; // 忽略粘贴时带入的空白\n      throw new Error('喵话编码：无法识别的字符「' + ch + '」');\n    }\n    if (count > 0) throw new Error('喵话编码：结尾缺少标点');\n    var out = '';\n    for (var j = 0; j + 16 <= bits.length; j += 16) {\n      out += String.fromCharCode(parseInt(bits.substr(j, 16), 2));\n    }\n    return out;\n  }"
+  "encode": "function sentenceEncode(input, params) {\n    var p = params || {};\n    var key = p.key || '';\n    var LANGS = {\n      '喵':   { word: '喵',   punct: ['，', '。', '！', '？', '：', '；', '、', '…'] },\n      'Meow': { word: 'Meow', punct: [',', '.', '!', '?', ':', ';', '-', '~'] }\n    };\n    var cfg = LANGS[p.lang] || LANGS['喵'];\n    var word = cfg.word, P = cfg.punct;\n    function hashSeed(s) { var h = 2166136261 >>> 0; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }\n    function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ (a >>> 15), 1 | a); t = t + Math.imul(t ^ (t >>> 7), 61 | t) ^ t; return ((t ^ (t >>> 14)) >>> 0); }; }\n    var rng = key ? mulberry32(hashSeed(key)) : null;\n\n    var bits = '';\n    for (var i = 0; i < input.length; i++) {\n      var c = input.charCodeAt(i);\n      if (rng) c = c ^ (rng() & 0xFFFF);\n      bits += c.toString(2).padStart(16, '0');\n    }\n    if (bits === '') return '';\n    var pad = (5 - (bits.length % 5)) % 5;\n    bits += '0'.repeat(pad);\n    var out = '';\n    for (var j = 0; j < bits.length; j += 5) {\n      var d = parseInt(bits.substr(j, 5), 2);\n      out += word.repeat((d % 4) + 1) + P[d >> 2];\n    }\n    return out;\n  }",
+  "decode": "function sentenceDecode(input, params) {\n    var p = params || {};\n    var key = p.key || '';\n    var LANGS = {\n      '喵':   { word: '喵',   punct: ['，', '。', '！', '？', '：', '；', '、', '…'] },\n      'Meow': { word: 'Meow', punct: [',', '.', '!', '?', ':', ';', '-', '~'] }\n    };\n    var cfg = LANGS[p.lang] || LANGS['喵'];\n    var word = cfg.word, P = cfg.punct;\n    function hashSeed(s) { var h = 2166136261 >>> 0; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }\n    function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ (a >>> 15), 1 | a); t = t + Math.imul(t ^ (t >>> 7), 61 | t) ^ t; return ((t ^ (t >>> 14)) >>> 0); }; }\n    var rng = key ? mulberry32(hashSeed(key)) : null;\n\n    var bits = '';\n    var i = 0;\n    while (i < input.length) {\n      var ch = input[i];\n      if (/\\s/.test(ch)) { i++; continue; }\n      var count = 0;\n      while (input.slice(i, i + word.length) === word) { count++; i += word.length; }\n      if (count > 0) {\n        if (count > 4) throw new Error('喵话编码：词数「' + count + '」超出 1~4');\n        var pidx = -1;\n        for (var k = 0; k < P.length; k++) {\n          if (input.slice(i, i + P[k].length) === P[k]) { pidx = k; i += P[k].length; break; }\n        }\n        if (pidx < 0) throw new Error('喵话编码：缺少标点「' + input.slice(i, i + 8) + '」');\n        bits += (pidx * 4 + (count - 1)).toString(2).padStart(5, '0');\n        continue;\n      }\n      throw new Error('喵话编码：无法识别的字符「' + ch + '」');\n    }\n    var out = '';\n    for (var j = 0; j + 16 <= bits.length; j += 16) {\n      var c = parseInt(bits.substr(j, 16), 2);\n      if (rng) c = c ^ (rng() & 0xFFFF);\n      out += String.fromCharCode(c);\n    }\n    return out;\n  }",
+  "params": [
+    {
+      "name": "key",
+      "type": "string",
+      "label": "密钥",
+      "default": "",
+      "placeholder": "留空则不加密",
+      "description": "非空时用密钥对内容加密，解码需要相同的密钥。"
+    },
+    {
+      "name": "lang",
+      "type": "select",
+      "label": "输出语言",
+      "options": [
+        "喵",
+        "Meow"
+      ],
+      "default": "喵",
+      "description": "决定喵语使用的“词”与标点。"
+    }
+  ]
 }

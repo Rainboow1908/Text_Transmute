@@ -37,9 +37,10 @@
       </thead>
       <tbody>
         <tr><td><code>name</code></td><td>string</td><td>是</td><td>内核名称，展示用（如 <code>喵话编码</code>）</td></tr>
-        <tr><td><code>version</code></td><td>string</td><td>否</td><td>版本号，如 <code>1.0.0</code></td></tr>
+        <tr><td><code>version</code></td><td>string</td><td>否</td><td>版本号，如 <code>1.1.0</code></td></tr>
         <tr><td><code>description</code></td><td>string</td><td>否</td><td>一句话描述转换原理</td></tr>
         <tr><td><code>author</code></td><td>string</td><td>否</td><td>作者名</td></tr>
+        <tr><td><code>params</code></td><td>array</td><td>否</td><td>自定义参数定义（见第 3 节），决定页面「内核设置」面板</td></tr>
         <tr><td><code>encode</code></td><td>string</td><td>是</td><td>JS 函数源码，人话 → 喵语</td></tr>
         <tr><td><code>decode</code></td><td>string</td><td>是</td><td>JS 函数源码，喵语 → 人话</td></tr>
       </tbody>
@@ -47,37 +48,71 @@
     <div class="note"><code>encode</code> / <code>decode</code> 的值是一段 <b>JavaScript 函数源码字符串</b>（可以是 <code>function(x){...}</code> 或箭头函数 <code>(x)=&gt;{...}</code>）。</div>
 
     <h2>2. 函数签名与约束</h2>
-    <pre><code>encode: (input: string) =&gt; string
-decode: (input: string) =&gt; string</code></pre>
+    <pre><code>encode: (input: string, params: object) =&gt; string
+decode: (input: string, params: object) =&gt; string</code></pre>
     <ul>
+      <li><code>params</code> 是<b>当前参数值的对象</b>，键来自第 3 节 <code>params</code> 定义里每个 <code>name</code>。例如声明了密钥参数 <code>key</code>，则函数内用 <code>params.key</code> 读取。内核没有 <code>params</code> 定义时，第二个参数为 <code>{}</code>。</li>
       <li><b>纯函数</b>：只依赖传入的参数，不访问 <code>window</code> / <code>document</code> / 网络 / 文件 / 时间，不修改外部状态。</li>
       <li><b>可用内置对象</b>：<code>String</code>、<code>Array</code>、<code>Object</code>、<code>Number</code>、<code>Math</code>、<code>JSON</code>、<code>RegExp</code>。</li>
       <li><b>禁止</b>：<code>require</code> / <code>import</code> / <code>eval</code> / <code>Function</code> 构造器（避免递归逃逸）、任何 DOM 或 IO 操作。</li>
-      <li><b>互逆</b>：对内核声称支持的输入范围，应满足 <code>decode(encode(x)) === x</code>。</li>
+      <li><b>自包含</b>：函数体必须自带所有依赖（辅助函数、映射表等），不能引用函数外定义的变量——因为函数会被序列化进 JSON、上传后重新编译。</li>
+      <li><b>互逆</b>：对内核声称支持的输入范围，应满足 <code>decode(encode(x, p), p) === x</code>（相同 <code>params</code> 下）。</li>
       <li><b>报错</b>：遇到无法处理的输入，用 <code>throw new Error('...')</code> 抛出，页面会捕获并以红色提示显示。</li>
     </ul>
 
-    <h2>3. 完整示例（内置「喵话编码」内核）</h2>
-    <pre><code>{
-  "name": "喵话编码",
-  "version": "1.0.0",
-  "description": "把文本按每 5 个比特编码成「若干个“喵” + 一个中文标点」，8 种标点 × 4 种喵数 = 32 进制，输出像一句有句读的喵话，可逆且更短。",
-  "author": "内置示例",
-  "encode": "function sentenceEncode(input) {\n    var P = ['，', '。', '！', '？', '：', '；', '、', '…'];\n    var bits = '';\n    for (var i = 0; i &lt; input.length; i++) {\n      bits += input.charCodeAt(i).toString(2).padStart(16, '0');\n    }\n    if (bits === '') return '';\n    var pad = (5 - (bits.length % 5)) % 5;\n    bits += '0'.repeat(pad);\n    var out = '';\n    for (var j = 0; j &lt; bits.length; j += 5) {\n      var d = parseInt(bits.substr(j, 5), 2);\n      out += '喵'.repeat((d % 4) + 1) + P[d &gt;&gt; 2];\n    }\n    return out;\n  }",
-  "decode": "function sentenceDecode(input) {\n    var P = ['，', '。', '！', '？', '：', '；', '、', '…'];\n    var bits = '';\n    var count = 0;\n    for (var i = 0; i &lt; input.length; i++) {\n      var ch = input[i];\n      if (ch === '喵') { count++; continue; }\n      var idx = P.indexOf(ch);\n      if (idx &gt;= 0) {\n        var n = count;\n        count = 0;\n        if (n &lt; 1 || n &gt; 4) throw new Error('喵话编码：喵的数量「' + n + '」超出 1~4');\n        bits += (idx * 4 + (n - 1)).toString(2).padStart(5, '0');\n        continue;\n      }\n      if (/\\s/.test(ch)) continue;\n      throw new Error('喵话编码：无法识别的字符「' + ch + '」');\n    }\n    if (count &gt; 0) throw new Error('喵话编码：结尾缺少标点');\n    var out = '';\n    for (var j = 0; j + 16 &lt;= bits.length; j += 16) {\n      out += String.fromCharCode(parseInt(bits.substr(j, 16), 2));\n    }\n    return out;\n  }"
-}</code></pre>
-
-    <h2>4. 内置示例内核</h2>
+    <h2>3. 参数定义（params）</h2>
+    <p><code>params</code> 是一个数组，每个元素定义一个可在页面「内核设置」里调整的参数：</p>
     <table>
       <thead>
-        <tr><th>内核</th><th>规则简述</th><th>可逆</th></tr>
+        <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
       </thead>
       <tbody>
-        <tr><td>喵话编码</td><td>每个 UTF-16 码元转 16 bit，整串按每 5 bit 一组编码成「<code>喵</code>×1~4 + 8 种中文标点之一」，即 32 进制。输出自带句读、更短</td><td>是</td></tr>
+        <tr><td><code>name</code></td><td>string</td><td>是</td><td>参数名，也是 <code>params</code> 对象的键</td></tr>
+        <tr><td><code>type</code></td><td>string</td><td>是</td><td>控件类型：<code>string</code> / <code>number</code> / <code>select</code> / <code>boolean</code></td></tr>
+        <tr><td><code>label</code></td><td>string</td><td>否</td><td>界面显示名（缺省用 <code>name</code>）</td></tr>
+        <tr><td><code>default</code></td><td>any</td><td>否</td><td>默认值</td></tr>
+        <tr><td><code>options</code></td><td>array</td><td>否</td><td><code>type=select</code> 时的可选项列表</td></tr>
+        <tr><td><code>placeholder</code></td><td>string</td><td>否</td><td><code>type=string</code> 时的占位提示</td></tr>
+        <tr><td><code>description</code></td><td>string</td><td>否</td><td>辅助说明</td></tr>
+      </tbody>
+    </table>
+    <pre><code>"params": [
+  { "name": "key",  "type": "string",  "label": "密钥",     "default": "", "placeholder": "留空则不加密" },
+  { "name": "lang", "type": "select",  "label": "输出语言", "options": ["喵", "Meow"], "default": "喵" },
+  { "name": "upper", "type": "boolean", "label": "大写",     "default": false },
+  { "name": "shift", "type": "number",  "label": "位移",     "default": 0 }
+]</code></pre>
+
+    <h2>4. 完整示例（最小演示：位移 + 大写）</h2>
+    <pre><code>{
+  "name": "位移演示",
+  "version": "1.0.0",
+  "description": "演示 params 用法：按位移量平移字符码点。",
+  "author": "示例",
+  "params": [
+    { "name": "shift", "type": "number", "label": "位移", "default": 0 },
+    { "name": "upper", "type": "boolean", "label": "大写输出", "default": false }
+  ],
+  "encode": "function(input, p){ var n=(p&amp;&amp;p.shift)||0; var s=''; for(var i=0;i&lt;input.length;i++){ s+=String.fromCharCode(input.charCodeAt(i)+n); } return p&amp;&amp;p.upper? s.toUpperCase(): s; }",
+  "decode": "function(input, p){ var n=(p&amp;&amp;p.shift)||0; var s=''; for(var i=0;i&lt;input.length;i++){ s+=String.fromCharCode(input.charCodeAt(i)-n); } return s; }"
+}</code></pre>
+    <div class="note">完整的内置「喵话编码」内核（含密钥加密 + 输出语言）见 <code>kernels/meow-sentence.json</code>。</div>
+
+    <h2>5. 内置示例内核</h2>
+    <table>
+      <thead>
+        <tr><th>内核</th><th>参数</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>喵话编码</td>
+          <td><code>key</code>(密钥)、<code>lang</code>(输出语言：喵 / Meow)</td>
+          <td>每个 UTF-16 码元转 16 bit，整串按每 5 bit 一组编码成「若干个“词” + 一个标点」，8 标点 × 4 词数 = 32 进制。<code>key</code> 非空时用密钥流对码元 XOR 加密（解码需相同密钥）；<code>lang</code> 决定“词”与标点集合。可逆、更短</td>
+        </tr>
       </tbody>
     </table>
 
-    <h2>5. 安全说明</h2>
+    <h2>6. 安全说明</h2>
     <div class="warn">页面在<b>你的浏览器本地</b>运行上传的内核。<code>encode</code>/<code>decode</code> 会被当作函数执行，因此<b>只上传你信任的内核文件</b>。第 2 节列出的限制只是约定，无法在纯前端 100% 强制——加载内核前请确认其来源。</div>
   </div>
 </body>

@@ -8,6 +8,7 @@
   var uploadedTabs = document.getElementById('uploaded-tabs');
   var uploadedLabel = document.getElementById('uploaded-label');
   var kernelInfo = document.getElementById('kernel-info');
+  var settingsPanel = document.getElementById('settings');
   var uploadBtn = document.getElementById('upload-btn');
   var downloadBtn = document.getElementById('download-btn');
   var fileInput = document.getElementById('file-input');
@@ -23,6 +24,7 @@
   var uploaded = [];              // 用户上传的内核
   var current = null;             // 当前内核对象
   var currentKey = 'builtin:0';   // 标识当前内核来源与索引
+  var currentParams = {};         // 当前参数值（由内核 params 定义 + 用户设置）
 
   /* ---------------- 工具 ---------------- */
   function showError(msg) {
@@ -90,29 +92,99 @@
     kernelInfo.classList.add('info-swap');
   }
 
+  function renderSettings() {
+    settingsPanel.innerHTML = '';
+    var schema = current ? current.params : [];
+    if (!schema || !schema.length) {
+      settingsPanel.hidden = true;
+      return;
+    }
+    settingsPanel.hidden = false;
+
+    var head = document.createElement('div');
+    head.className = 'settings-head';
+    head.textContent = '内核设置';
+    settingsPanel.appendChild(head);
+
+    var grid = document.createElement('div');
+    grid.className = 'settings-grid';
+
+    schema.forEach(function (s) {
+      var row = document.createElement('label');
+      row.className = 'setting-item';
+
+      var nameSpan = document.createElement('span');
+      nameSpan.className = 'setting-name';
+      nameSpan.textContent = s.label || s.name;
+      row.appendChild(nameSpan);
+
+      var control;
+      if (s.type === 'select') {
+        control = document.createElement('select');
+        (s.options || []).forEach(function (opt) {
+          var o = document.createElement('option');
+          o.value = opt;
+          o.textContent = opt;
+          control.appendChild(o);
+        });
+        control.value = currentParams[s.name] != null ? currentParams[s.name] : s.default;
+        control.addEventListener('change', function () { currentParams[s.name] = control.value; });
+      } else if (s.type === 'boolean') {
+        control = document.createElement('input');
+        control.type = 'checkbox';
+        control.checked = !!(currentParams[s.name] != null ? currentParams[s.name] : s.default);
+        control.addEventListener('change', function () { currentParams[s.name] = control.checked; });
+      } else if (s.type === 'number') {
+        control = document.createElement('input');
+        control.type = 'number';
+        control.value = currentParams[s.name] != null ? currentParams[s.name] : s.default;
+        control.addEventListener('input', function () { currentParams[s.name] = Number(control.value); });
+      } else {
+        // string / 默认
+        control = document.createElement('input');
+        control.type = 'text';
+        control.placeholder = s.placeholder || '';
+        control.value = currentParams[s.name] != null ? currentParams[s.name] : (s.default || '');
+        control.addEventListener('input', function () { currentParams[s.name] = control.value; });
+      }
+      control.className = 'setting-control';
+      row.appendChild(control);
+
+      if (s.description) {
+        var desc = document.createElement('span');
+        desc.className = 'setting-desc';
+        desc.textContent = s.description;
+        row.appendChild(desc);
+      }
+
+      grid.appendChild(row);
+    });
+
+    settingsPanel.appendChild(grid);
+  }
+
   /* ---------------- 选择内核 ---------------- */
-  function selectBuiltin(i) {
-    current = M.builtinKernels[i];
-    currentKey = 'builtin:' + i;
+  function applyKernel(kernel, key) {
+    current = kernel;
+    currentKey = key;
+    currentParams = M.paramsToDefaults(kernel.params);
     renderTabs();
     renderInfo();
+    renderSettings();
   }
-  function selectUploaded(i) {
-    current = uploaded[i];
-    currentKey = 'uploaded:' + i;
-    renderTabs();
-    renderInfo();
-  }
+  function selectBuiltin(i) { applyKernel(M.builtinKernels[i], 'builtin:' + i); }
+  function selectUploaded(i) { applyKernel(uploaded[i], 'uploaded:' + i); }
   function removeUploaded(i) {
     uploaded.splice(i, 1);
     if (currentKey === 'uploaded:' + i) {
-      selectBuiltin(0);
+      applyKernel(M.builtinKernels[0], 'builtin:0');
     } else if (currentKey.indexOf('uploaded:') === 0) {
       var idx = +currentKey.split(':')[1];
       if (idx > i) currentKey = 'uploaded:' + (idx - 1);
+      renderTabs();
+    } else {
+      renderTabs();
     }
-    renderTabs();
-    renderInfo();
   }
 
   /* ---------------- 上传内核 ---------------- */
@@ -127,11 +199,8 @@
       try {
         var kernel = M.compileKernel(String(reader.result));
         uploaded.push(kernel);
-        current = kernel;
-        currentKey = 'uploaded:' + (uploaded.length - 1);
+        applyKernel(kernel, 'uploaded:' + (uploaded.length - 1));
         clearError();
-        renderTabs();
-        renderInfo();
       } catch (e) {
         showError('内核加载失败：' + e.message);
       }
@@ -161,7 +230,7 @@
   function runConvert(fn, input, output) {
     clearError();
     try {
-      output.value = fn(input.value);
+      output.value = fn(input.value, currentParams);
       output.classList.remove('meow-flash');
       void output.offsetWidth; // 重新触发动画
       output.classList.add('meow-flash');

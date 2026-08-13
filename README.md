@@ -8,6 +8,9 @@
 - **双向转换**：人话 ⇄ 喵语（要求内核提供 `encode` 与 `decode` 两个函数）。
 - **可上传内核**：自己写一个 JSON 内核上传，立刻替换转换逻辑。
 - **内置示例内核**：喵话编码（可逆、自带句读、更短）。
+- **密钥加密**：可设密钥加密喵语，无密钥无法还原。
+- **输出语言**：可选「喵」或「Meow」两种输出语言。
+- **内核参数**：内核可声明自定义参数，在页面「内核设置」里调整。
 - **下载内核**：把当前内核导出为 JSON 文件，方便分享/备份。
 - **零依赖**：无构建链、无 npm，直接用浏览器打开即可运行。
 
@@ -53,7 +56,7 @@ python -m http.server 8000
 
 ## 编写自己的内核
 
-内核是一个 **JSON 文件**，含元数据 + 两个 JS 函数源码字符串：
+内核是一个 **JSON 文件**，含元数据 + 可选参数定义 + 两个 JS 函数源码字符串：
 
 ```json
 {
@@ -61,14 +64,18 @@ python -m http.server 8000
   "version": "1.0.0",
   "description": "一句话说明",
   "author": "我",
-  "encode": "function(input){ /* 人话 -> 喵语 */ }",
-  "decode": "function(input){ /* 喵语 -> 人话 */ }"
+  "params": [
+    { "name": "key", "type": "string", "label": "密钥", "default": "" }
+  ],
+  "encode": "function(input, params){ /* 人话 -> 喵语，可用 params.key */ }",
+  "decode": "function(input, params){ /* 喵语 -> 人话 */ }"
 }
 ```
 
-- `encode`：`(input: string) => string`，人话转喵语。
-- `decode`：`(input: string) => string`，喵语还原人话。
-- 二者应互逆：`decode(encode(x)) === x`。
+- `encode`：`(input: string, params: object) => string`，人话转喵语。
+- `decode`：`(input: string, params: object) => string`，喵语还原人话。
+- `params`：可选，声明可自定义参数，页面会据此渲染「内核设置」面板。
+- 二者应互逆：`decode(encode(x, p), p) === x`。
 - 出错用 `throw new Error('...')`。
 
 完整规范见 **[docs/kernel-spec.html](docs/kernel-spec.html)**（浏览器打开）；

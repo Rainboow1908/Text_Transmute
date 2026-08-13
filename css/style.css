@@ -249,3 +249,58 @@ textarea.meow-flash {
   25% { opacity: .35; }
   100% { transform: translateY(-70px) scale(1.1); opacity: 0; }
 }
+
+/* ---------------- 内核设置面板 ---------------- */
+.settings {
+  margin-top: 12px;
+  background: #fbf9f5;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  animation: fadeIn .3s ease;
+}
+.settings-head {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+.setting-name {
+  color: var(--muted);
+  font-weight: 600;
+}
+.setting-control {
+  font: inherit;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: #fff;
+  color: var(--text);
+}
+.setting-control:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(242, 166, 90, .2);
+}
+.setting-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+.setting-desc {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
