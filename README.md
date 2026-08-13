@@ -24,7 +24,9 @@ miaomiaomiao2/
 │   ├── meow-number.json
 │   ├── meow-morse.json
 │   └── meow-binary.json
-├── docs/kernel-spec.md   # 内核格式规范（必读）
+├── docs/
+│   ├── kernel-spec.md    # 内核格式规范（markdown 源）
+│   └── kernel-spec.html  # 内核格式规范（浏览器友好版，页面链接指向这里）
 ├── scripts/
 │   ├── generate-kernels.js  # 重新生成 kernels/*.json
 │   └── test-kernels.js      # 内核可逆性回归测试
@@ -71,7 +73,8 @@ python -m http.server 8000
 - 二者应互逆：`decode(encode(x)) === x`。
 - 出错用 `throw new Error('...')`。
 
-完整规范见 **[docs/kernel-spec.md](docs/kernel-spec.md)**。
+完整规范见 **[docs/kernel-spec.html](docs/kernel-spec.html)**（浏览器打开）；
+同内容的 markdown 源在 `docs/kernel-spec.md`（GitHub 上会自动渲染）。
 
 ## 开发
 
