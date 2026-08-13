@@ -12,7 +12,7 @@
 - **输出语言**：可选「喵」或「Meow」两种输出语言。
 - **内核参数**：内核可声明自定义参数，在页面「内核设置」里调整。
 - **下载内核**：把当前内核导出为 JSON 文件，方便分享/备份。
-- **零依赖**：无构建链、无 npm，直接用浏览器打开即可运行。
+- **零依赖**：无构建链、无 npm，只需一个静态文件服务器即可运行。
 
 ## 目录结构
 
@@ -21,23 +21,21 @@ miaomiaomiao2/
 ├── index.html            # 页面
 ├── css/style.css         # 样式
 ├── js/
-│   ├── kernels.js        # 内置内核 + 内核编译/序列化逻辑（浏览器 & Node 通用）
+│   ├── kernels.js        # 内核加载/编译/序列化逻辑（浏览器 & Node 通用）
 │   └── app.js            # 页面交互
-├── kernels/              # 示例内核文件（JSON，可直接上传）
+├── kernels/              # 内置内核文件（JSON，唯一真相，改这里即可改内核）
 │   └── meow-sentence.json
 ├── docs/
 │   ├── kernel-spec.md    # 内核格式规范（markdown 源）
 │   └── kernel-spec.html  # 内核格式规范（浏览器友好版，页面链接指向这里）
 ├── scripts/
-│   ├── generate-kernels.js  # 重新生成 kernels/*.json
-│   └── test-kernels.js      # 内核可逆性回归测试
+│   └── test-kernels.js      # 内核可逆性回归测试（读取 kernels/*.json）
 └── README.md
 ```
 
 ## 本地运行
 
-直接用浏览器打开 `index.html` 即可（所有示例内核内嵌，不依赖服务器）。
-也可以用任意静态服务器，例如：
+内置内核通过 fetch 从 `kernels/*.json` 加载，需要本地 HTTP 服务器（不能直接双击 file:// 打开）：
 
 ```bash
 python -m http.server 8000
@@ -84,9 +82,9 @@ python -m http.server 8000
 ## 开发
 
 ```bash
-# 回归测试（验证各内核 encode/decode 可逆）
+# 回归测试（读取 kernels/*.json，验证各内核 encode/decode 可逆）
 node scripts/test-kernels.js
-
-# 重新生成 kernels/*.json（改动内置内核后）
-node scripts/generate-kernels.js
 ```
+
+> 新增/修改内置内核：直接编辑或新增 `kernels/*.json`，并在 `js/kernels.js` 顶部的
+> `BUILTIN_FILES` 清单里登记文件路径。

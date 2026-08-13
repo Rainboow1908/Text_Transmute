@@ -21,9 +21,10 @@
   var errorBox = document.getElementById('error-box');
 
   /* ---------------- 状态 ---------------- */
+  var builtin = [];               // 内置内核（从 kernels/*.json 文件加载）
   var uploaded = [];              // 用户上传的内核
   var current = null;             // 当前内核对象
-  var currentKey = 'builtin:0';   // 标识当前内核来源与索引
+  var currentKey = '';            // 标识当前内核来源与索引
   var currentParams = {};         // 当前参数值（由内核 params 定义 + 用户设置）
 
   /* ---------------- 工具 ---------------- */
@@ -45,7 +46,7 @@
   /* ---------------- 渲染 ---------------- */
   function renderTabs() {
     builtinTabs.innerHTML = '';
-    M.builtinKernels.forEach(function (k, i) {
+    builtin.forEach(function (k, i) {
       var key = 'builtin:' + i;
       var el = document.createElement('button');
       el.type = 'button';
@@ -172,12 +173,12 @@
     renderInfo();
     renderSettings();
   }
-  function selectBuiltin(i) { applyKernel(M.builtinKernels[i], 'builtin:' + i); }
+  function selectBuiltin(i) { applyKernel(builtin[i], 'builtin:' + i); }
   function selectUploaded(i) { applyKernel(uploaded[i], 'uploaded:' + i); }
   function removeUploaded(i) {
     uploaded.splice(i, 1);
     if (currentKey === 'uploaded:' + i) {
-      applyKernel(M.builtinKernels[0], 'builtin:0');
+      applyKernel(builtin[0], 'builtin:0');
     } else if (currentKey.indexOf('uploaded:') === 0) {
       var idx = +currentKey.split(':')[1];
       if (idx > i) currentKey = 'uploaded:' + (idx - 1);
@@ -272,5 +273,18 @@
   copyMeow.addEventListener('click', function () { copyText(meowInput, copyMeow); });
 
   /* ---------------- 初始化 ---------------- */
-  selectBuiltin(0);
+  function init() {
+    M.loadBuiltinKernels().then(function (kernels) {
+      builtin = kernels;
+      if (!builtin.length) {
+        showError('未找到内置内核文件。');
+        return;
+      }
+      clearError();
+      applyKernel(builtin[0], 'builtin:0');
+    }).catch(function (e) {
+      showError('无法加载内置内核（' + e.message + '）。请通过 http 服务器访问本页，例如在项目目录运行：python -m http.server 8000');
+    });
+  }
+  init();
 })();

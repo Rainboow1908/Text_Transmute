@@ -1,6 +1,8 @@
 // 内核可逆性回归测试
 // 运行：node scripts/test-kernels.js
-const { builtinKernels, compileKernel, kernelToJSON } = require('../js/kernels.js');
+const fs = require('fs');
+const path = require('path');
+const { compileKernel, kernelToJSON, paramsToDefaults } = require('../js/kernels.js');
 
 let failed = false;
 
@@ -19,7 +21,10 @@ function roundtrip(k, samples, params) {
   console.log('OK   [' + k.name + '] params=' + JSON.stringify(params) + '  ' + samples.length + ' 组样本往返通过');
 }
 
-const k = builtinKernels[0];
+// 从内核 JSON 文件读取并编译（与页面 loadBuiltinKernels 走同一条编译路径）
+const jsonPath = path.join(__dirname, '..', 'kernels', 'meow-sentence.json');
+const k = compileKernel(fs.readFileSync(jsonPath, 'utf-8'));
+
 const samples = [
   '', '你好，世界', 'Hello, World!', '1234567890', '😀🚀',
   'a\nb\tc', '喵喵喵，喵喵喵：“喵喵”。喵喵喵喵！',
@@ -46,10 +51,12 @@ if (decWrong === '你好') {
   console.log('OK   密钥错误无法还原原文（符合预期）');
 }
 
-// compileKernel + kernelToJSON 往返（模拟“上传/下载内核”路径，含 params）
-const json = kernelToJSON(k);
-const compiled = compileKernel(json);
-roundtrip(compiled, ['你好', 'abc', '😀', '混合Mixed123'], { key: 'k', lang: 'Meow' });
+// kernelToJSON 往返（模拟“下载内核”后再“上传”）
+const recompiled = compileKernel(kernelToJSON(k));
+roundtrip(recompiled, ['你好', 'abc', '😀', '混合Mixed123'], { key: 'k', lang: 'Meow' });
+
+// params 默认值
+console.log('默认参数：' + JSON.stringify(paramsToDefaults(k.params)));
 
 // 打印样例，便于人工观察
 console.log('\n样例：');
