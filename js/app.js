@@ -132,7 +132,7 @@
     // 动画结束后回收，间隔 5s 再生成下一个
     el.addEventListener('animationend', function () {
       el.remove();
-      setTimeout(function () { spawnFloat(0); }, 5000);
+      setTimeout(function () { spawnFloat(0); }, 6000);
     });
   }
 
