@@ -17,6 +17,7 @@
       settings: '内核设置',
       customOption: '自定义…',
       customPlaceholder: '输入自定义值',
+      defaultIsSpace: '留空则用空格',
       inputLabel: '原始文本',
       outputLabel: '转换文本',
       transform: '转换 →',
@@ -45,6 +46,7 @@
       settings: 'Kernel settings',
       customOption: 'Custom…',
       customPlaceholder: 'Enter custom value',
+      defaultIsSpace: 'Empty = space',
       inputLabel: 'Original text',
       outputLabel: 'Transformed text',
       transform: 'Transform →',
@@ -321,9 +323,19 @@
       } else {
         control = document.createElement('input');
         control.type = 'text';
-        control.placeholder = M.localized(s.placeholder, currentLang);
+        var ph = M.localized(s.placeholder, currentLang);
+        if (!ph && typeof s.default === 'string' && s.default !== '' && s.default.trim() === '') {
+          ph = t('defaultIsSpace');
+        }
+        control.placeholder = ph;
         control.value = currentParams[s.name] != null ? currentParams[s.name] : (s.default || '');
         control.addEventListener('input', function () { currentParams[s.name] = control.value; });
+        control.addEventListener('blur', function () {
+          if (control.value === '' && s.default != null && s.default !== '') {
+            control.value = s.default;
+            currentParams[s.name] = s.default;
+          }
+        });
       }
       if (!isCustomSelect) control.className = 'setting-control';
       row.appendChild(control);
