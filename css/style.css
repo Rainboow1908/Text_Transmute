@@ -241,16 +241,17 @@ textarea.meow-flash {
   pointer-events: none;
   user-select: none;
   white-space: nowrap;
-  animation: floatUp 6s ease-in-out infinite;
+  animation: floatUp 5s ease-in-out infinite;
 }
 .float-meow.f1 { left: 10%; animation-delay: 0s; }
-.float-meow.f2 { left: 48%; animation-delay: 2s; }
-.float-meow.f3 { left: 82%; animation-delay: 4s; }
+.float-meow.f2 { left: 48%; animation-delay: 1.7s; }
+.float-meow.f3 { left: 82%; animation-delay: 3.3s; }
 
 @keyframes floatUp {
-  0% { transform: translateY(50px) scale(.9); opacity: 0; }
-  25% { opacity: .35; }
-  100% { transform: translateY(-70px) scale(1.1); opacity: 0; }
+  0% { transform: translateY(40px) scale(.95); opacity: 0; }
+  12% { opacity: .75; }
+  70% { opacity: .65; }
+  100% { transform: translateY(-70px) scale(1.05); opacity: 0; }
 }
 
 /* ---------------- 内核设置面板 ---------------- */
