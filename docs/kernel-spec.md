@@ -129,9 +129,9 @@ decode: (input: string, params: object) => string
 3. 在 `market/index.json` 里登记文件名。
 4. 提交 Pull Request，审核通过后即上线。
 
-**方式二：直接联系作者**
+**~~方式二：直接联系作者（暂时关闭）~~**
 
-把内核 JSON 发给作者（见仓库联系方式），审核通过后加入市场。
+~~把内核 JSON 发给作者（见仓库联系方式），审核通过后加入市场。~~
 
 提交前请确认内核满足本规范（尤其第 2 节的多语言要求），并可用
 `node scripts/test-kernels.js` 验证 `encode`/`decode` 可逆。

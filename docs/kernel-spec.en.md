@@ -129,10 +129,10 @@ Want your kernel to appear on the "Kernel Market" page? Two ways:
 3. Register its filename in `market/index.json`.
 4. Open a Pull Request; it goes live once reviewed and merged.
 
-**Option 2: Contact the author**
+**~~Option 2: Contact the author (temporarily closed)~~**
 
-Send the kernel JSON to the author (see the repository contact), and it will be
-added after review.
+~~Send the kernel JSON to the author (see the repository contact), and it will be
+added after review.~~
 
 Before submitting, make sure the kernel meets this spec (especially the §2
 multilingual requirement) and that `encode`/`decode` round-trip via

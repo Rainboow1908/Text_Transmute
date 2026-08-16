@@ -75,11 +75,12 @@
           .replace(/'/g, '&#39;');
       }
 
-      // 行内语法：`code`、**粗体**、[文本](链接)
+      // 行内语法：`code`、**粗体**、~~删除线~~、[文本](链接)
       function inline(s) {
         s = escapeHtml(s);
         s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
         s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+        s = s.replace(/~~([^~]+)~~/g, '<del>$1</del>');
         s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2">$1</a>');
         return s;
       }
