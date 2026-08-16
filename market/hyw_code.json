@@ -1,0 +1,46 @@
+{
+  "name": {
+    "zh": "何！意！味！编码",
+    "en": "Thinking to think Encoding"
+  },
+  "version": "1.0.0",
+  "description": {
+    "zh": "将本来可读的文本转换为另一种可读（存疑）的英语文本的神秘编码。",
+    "en": "Convert text to binary, using 'that he thinks' for 0 and 'that she thinks' for 1, starting with 'I think' and ending with 'me.' to form recursive thought chains"
+  },
+  "author": {
+    "zh": "思维编织者",
+    "en": "Thought Weaver"
+  },
+  "params": [
+    {
+      "name": "separator",
+      "type": "select",
+      "label": {
+        "zh": "连接方式",
+        "en": "Separator"
+      },
+      "default": "space",
+      "options": ["space", "comma", "none"],
+      "description": {
+        "zh": "每位的连接方式：空格、逗号、或直接连接",
+        "en": "How to connect each bit: space, comma, or direct concatenation"
+      }
+    },
+    {
+      "name": "binaryLength",
+      "type": "number",
+      "label": {
+        "zh": "二进制位数",
+        "en": "Binary Length"
+      },
+      "default": 8,
+      "description": {
+        "zh": "每个字符的二进制位数（8或16）",
+        "en": "Bits per character (8 or 16)"
+      }
+    }
+  ],
+  "encode": "function(input, params) { var sep = params.separator || 'space'; var bitLen = params.binaryLength || 8; var separatorMap = { 'space': ' ', 'comma': ', ', 'none': '' }; var separator = separatorMap[sep] || ' '; var binaryStr = ''; for (var i = 0; i < input.length; i++) { var code = input.charCodeAt(i); var bin = code.toString(2); while (bin.length < bitLen) { bin = '0' + bin; } binaryStr += bin; } var result = 'I think '; for (var i = 0; i < binaryStr.length; i++) { if (binaryStr[i] === '0') { result += 'that he thinks'; } else { result += 'that she thinks'; } if (i < binaryStr.length - 1) { result += separator; } } result += ' me.'; return result; }",
+  "decode": "function(input, params) { var bitLen = params.binaryLength || 8; var clean = input.replace(/^I think\\s*/, '').replace(/\\s*me\\.$/, ''); var parts = clean.split(/\\s*,\\s*|\\s+/); var binaryStr = ''; for (var i = 0; i < parts.length; i++) { var token = parts[i].trim(); if (token === 'that' && parts[i+1] === 'he' && parts[i+2] === 'thinks') { binaryStr += '0'; i += 2; } else if (token === 'that' && parts[i+1] === 'she' && parts[i+2] === 'thinks') { binaryStr += '1'; i += 2; } } var result = ''; for (var i = 0; i < binaryStr.length; i += bitLen) { if (i + bitLen <= binaryStr.length) { var byte = binaryStr.substr(i, bitLen); var code = parseInt(byte, 2); result += String.fromCharCode(code); } } return result; }"
+}
