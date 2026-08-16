@@ -6,11 +6,11 @@
   "version": "1.0.0",
   "description": {
     "zh": "将本来可读的文本转换为另一种可读（存疑）的英语文本的神秘编码。",
-    "en": "Convert text to binary, using 'that he thinks' for 0 and 'that she thinks' for 1, starting with 'I think' and ending with 'me.' to form recursive thought chains"
+    "en": "Convert text to binary, using 'that he thinks' for 0 and 'that she thinks' for 1, starting with 'I think' and ending with 'me.' to form recursive thought chains."
   },
   "author": {
-    "zh": "思维编织者",
-    "en": "Thought Weaver"
+    "zh": "As***Ker",
+    "en": "As***Ker"
   },
   "params": [
     {
@@ -36,11 +36,11 @@
       },
       "default": 8,
       "description": {
-        "zh": "每个字符的二进制位数（8或16）",
-        "en": "Bits per character (8 or 16)"
+        "zh": "每个字符的二进制位数：8（仅 ASCII）或 16（含中文）",
+        "en": "Bits per character: 8 (ASCII only) or 16 (incl. Chinese)"
       }
     }
   ],
-  "encode": "function(input, params) { var sep = params.separator || 'space'; var bitLen = params.binaryLength || 8; var separatorMap = { 'space': ' ', 'comma': ', ', 'none': '' }; var separator = separatorMap[sep] || ' '; var binaryStr = ''; for (var i = 0; i < input.length; i++) { var code = input.charCodeAt(i); var bin = code.toString(2); while (bin.length < bitLen) { bin = '0' + bin; } binaryStr += bin; } var result = 'I think '; for (var i = 0; i < binaryStr.length; i++) { if (binaryStr[i] === '0') { result += 'that he thinks'; } else { result += 'that she thinks'; } if (i < binaryStr.length - 1) { result += separator; } } result += ' me.'; return result; }",
-  "decode": "function(input, params) { var bitLen = params.binaryLength || 8; var clean = input.replace(/^I think\\s*/, '').replace(/\\s*me\\.$/, ''); var parts = clean.split(/\\s*,\\s*|\\s+/); var binaryStr = ''; for (var i = 0; i < parts.length; i++) { var token = parts[i].trim(); if (token === 'that' && parts[i+1] === 'he' && parts[i+2] === 'thinks') { binaryStr += '0'; i += 2; } else if (token === 'that' && parts[i+1] === 'she' && parts[i+2] === 'thinks') { binaryStr += '1'; i += 2; } } var result = ''; for (var i = 0; i < binaryStr.length; i += bitLen) { if (i + bitLen <= binaryStr.length) { var byte = binaryStr.substr(i, bitLen); var code = parseInt(byte, 2); result += String.fromCharCode(code); } } return result; }"
+  "encode": "function(input, params) {\n  var p = params || {};\n  var sep = p.separator || 'space';\n  var bitLen = p.binaryLength || 8;\n  var separatorMap = { 'space': ' ', 'comma': ', ', 'none': '' };\n  var separator = separatorMap[sep] != null ? separatorMap[sep] : ' ';\n  var max = (1 << bitLen) - 1;\n  var binaryStr = '';\n  for (var i = 0; i < input.length; i++) {\n    var code = input.charCodeAt(i);\n    if (code > max) {\n      throw new Error('字符「' + input[i] + '」超出 ' + bitLen + ' 位范围，请用更大的位数');\n    }\n    var bin = code.toString(2);\n    while (bin.length < bitLen) bin = '0' + bin;\n    binaryStr += bin;\n  }\n  var result = 'I think ';\n  for (var i = 0; i < binaryStr.length; i++) {\n    result += (binaryStr[i] === '0') ? 'that he thinks' : 'that she thinks';\n    if (i < binaryStr.length - 1) result += separator;\n  }\n  result += ' me.';\n  return result;\n}",
+  "decode": "function(input, params) {\n  var p = params || {};\n  var bitLen = p.binaryLength || 8;\n  var clean = input.replace(/^I think\\s*/, '').replace(/\\s*me\\.\\s*$/, '');\n  var binaryStr = '';\n  var re = /that\\s+(he|she)\\s+thinks/g;\n  var m;\n  while ((m = re.exec(clean)) !== null) {\n    binaryStr += (m[1] === 'she') ? '1' : '0';\n  }\n  var result = '';\n  for (var i = 0; i + bitLen <= binaryStr.length; i += bitLen) {\n    result += String.fromCharCode(parseInt(binaryStr.substr(i, bitLen), 2));\n  }\n  return result;\n}"
 }
